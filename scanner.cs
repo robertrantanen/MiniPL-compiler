@@ -51,7 +51,6 @@ namespace MiniPl
             keywords["size"] = TokenType.SIZE;
             keywords["true"] = TokenType.TRUE;
             keywords["writeln"] = TokenType.WRITELN;
-            keywords["call"] = TokenType.CALL;
 
             //Console.WriteLine(text);
             while (start < end)

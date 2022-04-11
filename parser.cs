@@ -155,9 +155,9 @@ namespace MiniPl
                 match(TokenType.COLON);
                 type(id);
 
-                while (check(TokenType.COLON))
+                while (check(TokenType.COMMA))
                 {
-                    match(TokenType.COLON);
+                    match(TokenType.COMMA);
                     p = parent;
                     if (check(TokenType.VAR))
                     {
@@ -176,7 +176,10 @@ namespace MiniPl
             {
                 Node p = matchAddNode(parent, TokenType.ARRAY);
                 match(TokenType.LEFT_BRACKET);
-                integer_expression(p);
+                if (!check(TokenType.RIGHT_BRACKET))
+                {
+                    integer_expression(p);
+                }
                 match(TokenType.RIGHT_BRACKET);
                 match(TokenType.OF);
                 matchAddNode(p, TokenType.STRINGTYPE, TokenType.INTTYPE, TokenType.REALTYPE, TokenType.BOOLTYPE);
@@ -216,7 +219,7 @@ namespace MiniPl
                     {
                         assignment(parent);
                     }
-                    else if (peek() == TokenType.CALL)
+                    else if (peek() == TokenType.LEFT_PAREN)
                     {
                         call_statement(parent);
                     }
@@ -268,7 +271,7 @@ namespace MiniPl
         private Node variable(Node parent)
         {
             Node id = matchAddNode(parent, TokenType.IDENTIFIER);
-            if (peek() == TokenType.LEFT_BRACKET)
+            if (check(TokenType.LEFT_BRACKET))
             {
                 match(TokenType.LEFT_BRACKET);
                 integer_expression(id);
@@ -280,9 +283,9 @@ namespace MiniPl
         private void call_statement(Node parent)
         {
             Node id = matchAddNode(parent, TokenType.IDENTIFIER);
-            match(TokenType.LEFT_BRACKET);
+            match(TokenType.LEFT_PAREN);
             arguments(id);
-            match(TokenType.RIGHT_BRACKET);
+            match(TokenType.RIGHT_PAREN);
         }
 
         private void arguments(Node parent)
@@ -301,7 +304,7 @@ namespace MiniPl
         private void return_statement(Node parent)
         {
             Node p = matchAddNode(parent, TokenType.RETURN);
-            if (operators.Contains(currentToken()))
+            if (!check(TokenType.SEMICOLON))
             {
                 expression(p);
             }
@@ -346,7 +349,8 @@ namespace MiniPl
             statement(then);
             if (check(TokenType.ELSE) | peek() == TokenType.ELSE)
             {
-                if (check(TokenType.SEMICOLON)) {
+                if (check(TokenType.SEMICOLON))
+                {
                     match(TokenType.SEMICOLON);
                 }
                 Node els = matchAddNode(then, TokenType.ELSE);
@@ -377,6 +381,15 @@ namespace MiniPl
 
         private void expression(Node parent)
         {
+            if (check(TokenType.MINUS))
+            {
+                match(TokenType.MINUS);
+                tokens[current].value = "-" + tokens[current].value;
+            }
+            if (check(TokenType.PLUS))
+            {
+                match(TokenType.PLUS);
+            }
             if (check(TokenType.NOT))
             {
                 Node n = matchAddNode(parent, TokenType.NOT);
@@ -385,6 +398,8 @@ namespace MiniPl
             if (operators.Contains(peek()))
             {
                 binaryExpression(parent);
+            } else if (check(TokenType.IDENTIFIER)) {
+                operand(parent);
             }
             else
             {
@@ -408,9 +423,25 @@ namespace MiniPl
                 expression(parent);
                 match(TokenType.RIGHT_PAREN);
             }
+            else if (check(TokenType.IDENTIFIER))
+            {
+                if (peek() == TokenType.LEFT_PAREN)
+                {
+                    call_statement(parent);
+                }
+                else
+                {
+                    variable(parent);
+                }
+            }
             else
             {
                 matchAddNode(parent, TokenType.INT, TokenType.STRING, TokenType.IDENTIFIER, TokenType.REAL, TokenType.BOOLEAN);
+            }
+            if (check(TokenType.DOT))
+            {
+                match(TokenType.DOT);
+                matchAddNode(parent, TokenType.SIZE);
             }
         }
 
