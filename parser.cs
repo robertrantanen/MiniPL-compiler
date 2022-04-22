@@ -255,17 +255,17 @@ namespace MiniPl
             while (check(TokenType.COMMA))
             {
                 match(TokenType.COMMA);
-                matchAddNode(id, TokenType.IDENTIFIER);
+                matchAddNode(p, TokenType.IDENTIFIER);
             }
             match(TokenType.COLON);
-            type(id);
+            type(p);
         }
 
         private void assignment(Node parent)
         {
             Node id = variable(parent);
-            match(TokenType.STATEMENT);
-            expression(id);
+            Node assign = matchAddNode(id, TokenType.STATEMENT);
+            expression(assign);
         }
 
         private Node variable(Node parent)

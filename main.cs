@@ -41,9 +41,9 @@ namespace MiniPl
                     Parser parser = new Parser(tokens);
                     Ast ast = parser.parse();
                     ast.printChilds(ast.root);
-                    // Interpreter interpreter = new Interpreter(ast);
-                    // Console.WriteLine("Program start");
-                    // interpreter.start();
+                    Semantic semantic = new Semantic(ast);
+                    //Console.WriteLine("Program start");
+                    semantic.start();
                 }
                 else
                 {
