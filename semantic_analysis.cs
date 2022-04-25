@@ -18,17 +18,62 @@ namespace MiniPl
             parent = parent_;
         }
 
-        public void add(string key, Element value)
+        public void add(Node iden, Node typeNode)
         {
-            variables.Add(key, value);
+            string key = iden.token.value;
+            string type = typeNode.token.value;
+            if (!variables.ContainsKey(key))
+            {
+                if (type.Equals("array"))
+                {
+                    int arrVal = Convert.ToInt32(typeNode.childs[0].token.value);
+                    string arrType = typeNode.childs[1].token.value;
+                    switch (arrType)
+                    {
+                        case "integer":
+                            variables.Add(key, new Element(new int[arrVal], type));
+                            break;
+                        case "real":
+                            variables.Add(key, new Element(new float[arrVal], type));
+                            break;
+                        case "string":
+                            variables.Add(key, new Element(new string[arrVal], type));
+                            break;
+                        case "boolean":
+                            variables.Add(key, new Element(new bool[arrVal], type));
+                            break;
+                    }
+                }
+                else
+                {
+                    variables.Add(key, new Element(null, type));
+                }
+            }
+            else
+            {
+                Error e = new Error("SEMANTIC ERROR: variable " + key + " already defined in scope", iden.token.line);
+                Console.WriteLine(e);
+            }
         }
 
         public void edit(string key, Object value)
         {
             if (variables.ContainsKey(key))
             {
-                variables[key].value = value;
-                return;
+                if (variables[key].type.Equals("array"))
+                {
+
+                }
+                else
+                {
+                    variables[key].value = value;
+                    return;
+                }
+            }
+            else if (parent == null)
+            {
+                Error e = new Error("SEMANTIC ERROR: variable " + key + " not found", 0);
+                Console.WriteLine(e);
             }
             else
             {
@@ -99,6 +144,8 @@ namespace MiniPl
         Dictionary<string, Element> variables;
 
         Dictionary<string, CustomFunction> functions;
+
+        static private List<TokenType> operators = new List<TokenType>() { TokenType.PLUS, TokenType.MINUS, TokenType.STAR, TokenType.SLASH, TokenType.MODULO, TokenType.AND, TokenType.OR, TokenType.EQUAL, TokenType.LESS, TokenType.GREATER, TokenType.EQUALGREATER, TokenType.EQUALLESS, TokenType.NOTEQUAL };
 
         public Semantic(Ast ast_)
         {
@@ -234,19 +281,11 @@ namespace MiniPl
 
         private void defineVariable(Node node, Scope scope)
         {
-            string type = node.childs[node.childs.Count - 1].token.value;
+            Node type = node.childs[node.childs.Count - 1];
             foreach (int i in Enumerable.Range(0, node.childs.Count - 1))
             {
-                string iden = node.childs[i].token.value;
-                if (!scope.variables.ContainsKey(iden))
-                {
-                    scope.variables.Add(iden, new Element(null, type));
-                }
-                else
-                {
-                    Error e = new Error("SEMANTIC ERROR: variable " + iden + " already defined in scope", node.token.line);
-                    Console.WriteLine(e);
-                }
+                Node iden = node.childs[i];
+                scope.add(iden, type);
             }
         }
 
@@ -256,21 +295,7 @@ namespace MiniPl
             {
                 Element element = scope.variables[node.token.value];
                 Node value = node.childs[0].childs[0];
-                switch (element.type)
-                {
-                    case "string":
-                        scope.edit(node.token.value, stringOperation(value, scope));
-                        return;
-                    case "integer":
-                        scope.edit(node.token.value, integerOperation(value, scope));
-                        return;
-                    case "real":
-                        scope.edit(node.token.value, realOperation(value, scope));
-                        return;
-                    case "boolean":
-                        scope.edit(node.token.value, booleanOperation(value, scope));
-                        return;
-                }
+                scope.edit(node.token.value, expression(value, scope));
             }
             else
             {
@@ -280,9 +305,42 @@ namespace MiniPl
         }
 
 
+        private Object expression(Node node, Scope scope)
+        {
+            switch (node.token.type)
+            {
+                case TokenType.INT:
+                    return integerOperation(node, scope);
+                case TokenType.REAL:
+                    return realOperation(node, scope);
+                case TokenType.STRING:
+                    return stringOperation(node, scope);
+                case TokenType.BOOLEAN:
+                    return booleanOperation(node, scope);
+                default:
+                    if (operators.Contains(node.token.type))
+                    {
+                        Node first = node.childs[0];
+                        switch (first.token.type)
+                        {
+                            case TokenType.INT:
+                                return integerOperation(node, scope);
+                            case TokenType.REAL:
+                                return realOperation(node, scope);
+                            case TokenType.STRING:
+                                return stringOperation(node, scope);
+                            case TokenType.BOOLEAN:
+                                return booleanOperation(node, scope);
+                        }
+                    }
+                    return null;
+            }
+        }
+
+
         private bool isArithmeticOperation(TokenType type)
         {
-            return (type == TokenType.PLUS | type == TokenType.MINUS | type == TokenType.STAR | type == TokenType.SLASH);
+            return (type == TokenType.PLUS | type == TokenType.MINUS | type == TokenType.STAR | type == TokenType.SLASH | type == TokenType.MODULO);
         }
 
         private int integerOperation(Node node, Scope scope)
@@ -325,6 +383,10 @@ namespace MiniPl
                 else if (operation == TokenType.SLASH)
                 {
                     return leftint / rightint;
+                }
+                else if (operation == TokenType.MODULO)
+                {
+                    return leftint % rightint;
                 }
             }
             else
@@ -437,13 +499,65 @@ namespace MiniPl
             {
                 left = node.childs[0];
                 right = node.childs[1];
-                return (integerOperation(left, scope) == integerOperation(right, scope));
+                return (expression(left, scope) == expression(right, scope));
             }
             else if (node.token.type == TokenType.LESS)
             {
+                Object left2 = expression(node.childs[0], scope);
+                Object right2 = expression(node.childs[1], scope);
+                if (left2.GetType() == typeof(int))
+                {
+                    return (int)left2 < (int)right2;
+                }
+                else if (left2.GetType() == typeof(float))
+                {
+                    return (float)left2 < (float)right2;
+                }
+            }
+            else if (node.token.type == TokenType.GREATER)
+            {
+                Object left2 = expression(node.childs[0], scope);
+                Object right2 = expression(node.childs[1], scope);
+                if (left2.GetType() == typeof(int))
+                {
+                    return (int)left2 > (int)right2;
+                }
+                else if (left2.GetType() == typeof(float))
+                {
+                    return (float)left2 > (float)right2;
+                }
+            }
+            else if (node.token.type == TokenType.EQUALLESS)
+            {
+                Object left2 = expression(node.childs[0], scope);
+                Object right2 = expression(node.childs[1], scope);
+                if (left2.GetType() == typeof(int))
+                {
+                    return (int)left2 <= (int)right2;
+                }
+                else if (left2.GetType() == typeof(float))
+                {
+                    return (float)left2 <= (float)right2;
+                }
+            }
+            else if (node.token.type == TokenType.EQUALGREATER)
+            {
+                Object left2 = expression(node.childs[0], scope);
+                Object right2 = expression(node.childs[1], scope);
+                if (left2.GetType() == typeof(int))
+                {
+                    return (int)left2 >= (int)right2;
+                }
+                else if (left2.GetType() == typeof(float))
+                {
+                    return (float)left2 >= (float)right2;
+                }
+            }
+            else if (node.token.type == TokenType.NOTEQUAL)
+            {
                 left = node.childs[0];
                 right = node.childs[1];
-                return (integerOperation(left, scope) < integerOperation(right, scope));
+                return (expression(left, scope) != expression(right, scope));
             }
             else if (node.token.type == TokenType.NOT)
             {
@@ -455,6 +569,12 @@ namespace MiniPl
                 left = node.childs[0];
                 right = node.childs[1];
                 return (booleanOperation(left, scope) && booleanOperation(right, scope));
+            }
+            else if (node.token.type == TokenType.OR)
+            {
+                left = node.childs[0];
+                right = node.childs[1];
+                return (booleanOperation(left, scope) | booleanOperation(right, scope));
             }
             else
             {
