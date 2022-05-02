@@ -168,9 +168,34 @@ namespace MiniPl
 
         string text = "#include <stdio.h>\nint main() {\n";
 
+        int currentR = 0;
+
         public Semantic(Ast ast_)
         {
             ast = ast_;
+        }
+
+        public string nextR()
+        {
+            currentR++;
+            return "r" + currentR;
+        }
+
+        public string getCurrentR()
+        {
+            return "r" + currentR;
+        }
+
+        public string lastR()
+        {
+            int i = currentR - 1;
+            return "r" + i;
+        }
+
+        public string secondLastR()
+        {
+            int i = currentR - 2;
+            return "r" + i;
         }
 
         public void start()
@@ -314,12 +339,13 @@ namespace MiniPl
         private void defineVariable(Node node, Scope scope)
         {
             Node type = node.childs[node.childs.Count - 1];
-            for (int i = 0; i < node.childs.Count -1; i++)
+            for (int i = 0; i < node.childs.Count - 1; i++)
             {
                 Node iden = node.childs[i];
                 Console.WriteLine(iden.token.value);
                 scope.add(iden, type);
-                switch(type.token.value) {
+                switch (type.token.value)
+                {
                     case "integer":
                         text += "int " + iden.token.value + ";\n";
                         break;
@@ -332,7 +358,7 @@ namespace MiniPl
             //Element element = scope.variables[node.token.value];
             Node value = node.childs[0].childs[0];
             scope.edit(node, expression(value, scope));
-
+            text += node.token.value + " = " + getCurrentR() + ";\n";
         }
 
         private void editArrayVariable(Node node, Scope scope)
@@ -386,6 +412,7 @@ namespace MiniPl
         {
             if (node.token.type == TokenType.INT)
             {
+                text += "int " + nextR() + " = " + node.token.value + ";\n";
                 return Convert.ToInt32(node.token.value);
             }
             else if (node.token.type == TokenType.IDENTIFIER)
@@ -393,6 +420,7 @@ namespace MiniPl
                 try
                 {
                     //edit for arrays
+                    text += "int " + nextR() + " = " + node.token.value + ";\n";
                     return Convert.ToInt32(scope.get(node.token.value));
                 }
                 catch (Exception)
@@ -410,18 +438,22 @@ namespace MiniPl
                 int rightint = integerOperation(right, scope);
                 if (operation == TokenType.PLUS)
                 {
+                    text += "int " + nextR() + " = " + secondLastR() + " + " + lastR() + ";\n";
                     return leftint + rightint;
                 }
                 else if (operation == TokenType.MINUS)
                 {
+                    text += "int " + nextR() + " = " + secondLastR() + " - " + lastR() + ";\n";
                     return leftint - rightint;
                 }
                 else if (operation == TokenType.STAR)
                 {
+                    text += "int " + nextR() + " = " + secondLastR() + " * " + lastR() + ";\n";
                     return leftint * rightint;
                 }
                 else if (operation == TokenType.SLASH)
                 {
+                    text += "int " + nextR() + " = " + secondLastR() + " / " + lastR() + ";\n";
                     return leftint / rightint;
                 }
                 else if (operation == TokenType.MODULO)
@@ -628,31 +660,33 @@ namespace MiniPl
 
         private void print(Node node, Scope scope)
         {
-            // Node printable = node.childs[0];
-            // if (printable.token.type == TokenType.IDENTIFIER)
-            // {
-            //     if (variables.ContainsKey(printable.token.value))
-            //     {
-            //         if (variables[printable.token.value].value == null)
-            //         {
-            //             Error e = new Error("SEMANTIC ERROR: null variable " + printable.token.value, node.token.line);
-            //             Console.WriteLine(e);
-            //         }
-            //         else
-            //         {
-            //             Console.Write(variables[printable.token.value].value);
-            //         }
-            //     }
-            //     else
-            //     {
-            //         Error e = new Error("SEMANTIC ERROR: undeclared variable " + node.token.value, node.token.line);
-            //         Console.WriteLine(e);
-            //     }
-            // }
-            // else
-            // {
-            //     Console.Write(printable.token.value);
-            // }
+            Node printable = node.childs[0];
+            if (printable.token.type == TokenType.IDENTIFIER)
+            {
+                if (scope.variables.ContainsKey(printable.token.value))
+                {
+                    if (scope.variables[printable.token.value].value == null)
+                    {
+                        Error e = new Error("SEMANTIC ERROR: null variable " + printable.token.value, node.token.line);
+                        Console.WriteLine(e);
+                    }
+                    else
+                    {
+                        //text += "printf(" + printable.token.value + ");\n";
+                        //Console.Write(scope.variables[printable.token.value].value);
+                    }
+                }
+                else
+                {
+                    Error e = new Error("SEMANTIC ERROR: undeclared variable " + node.token.value, node.token.line);
+                    Console.WriteLine(e);
+                }
+            }
+            else
+            {
+                //text += "printf(" + printable.token.value + ");\n";
+                //Console.Write(printable.token.value);
+            }
         }
 
         private void read(Node node, Scope scope)
