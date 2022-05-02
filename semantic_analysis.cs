@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 
 namespace MiniPl
 {
@@ -56,12 +57,23 @@ namespace MiniPl
             }
         }
 
-        public void edit(string key, Object value)
+        public void edit(Node iden, Object value)
         {
+            string key = iden.token.value;
             if (variables.ContainsKey(key))
             {
+                Console.WriteLine(variables[key].type);
                 if (variables[key].type.Equals("array"))
                 {
+                    int i = Convert.ToInt32(iden.childs[0].token.value);
+                    Console.WriteLine(variables[key].value.GetType());
+                    object[] array = ((Array)variables[key].value).Cast<object>().ToArray();
+                    int[] ints = Array.ConvertAll(array, item => Convert.ToInt32(item));
+                    ints[i] = Convert.ToInt32(value);
+                    variables[key].value = ints;
+                    // switch(variables[key].value.GetType()) {
+
+                    // }
 
                 }
                 else
@@ -77,7 +89,7 @@ namespace MiniPl
             }
             else
             {
-                parent.edit(key, value);
+                parent.edit(iden, value);
             }
         }
 
@@ -99,6 +111,12 @@ namespace MiniPl
             foreach (KeyValuePair<string, Element> k in variables)
             {
                 Console.WriteLine("Key: {0}, Value: {1}, Type: {2}", k.Key, k.Value.value, k.Value.type);
+                if (k.Value.value.GetType().IsArray)
+                {
+                    object[] array = ((Array)k.Value.value).Cast<object>().ToArray();
+                    int[] ints = Array.ConvertAll(array, item => Convert.ToInt32(item));
+                    Console.WriteLine(ints[0]);
+                }
             }
         }
 
@@ -137,6 +155,7 @@ namespace MiniPl
         }
     }
 
+
     class Semantic
     {
 
@@ -146,6 +165,8 @@ namespace MiniPl
         Dictionary<string, CustomFunction> functions;
 
         static private List<TokenType> operators = new List<TokenType>() { TokenType.PLUS, TokenType.MINUS, TokenType.STAR, TokenType.SLASH, TokenType.MODULO, TokenType.AND, TokenType.OR, TokenType.EQUAL, TokenType.LESS, TokenType.GREATER, TokenType.EQUALGREATER, TokenType.EQUALLESS, TokenType.NOTEQUAL };
+
+        string text = "#include <stdio.h>\nint main() {\n";
 
         public Semantic(Ast ast_)
         {
@@ -173,6 +194,10 @@ namespace MiniPl
                     Console.WriteLine(n.token.value);
                 }
             }
+            //gcc -o program program.c
+            //./program
+            text += "\n}";
+            File.WriteAllText("program.c", text);
         }
 
         private void startBlock(Node node, Scope scope)
@@ -230,6 +255,13 @@ namespace MiniPl
                     {
                         editVariable(node, scope);
                     }
+                    else if (node.childs.Count > 1)
+                    {
+                        if (node.childs[1].token.type == TokenType.STATEMENT)
+                        {
+                            editArrayVariable(node, scope);
+                        }
+                    }
                     else
                     {
                         call(node, scope);
@@ -282,26 +314,33 @@ namespace MiniPl
         private void defineVariable(Node node, Scope scope)
         {
             Node type = node.childs[node.childs.Count - 1];
-            foreach (int i in Enumerable.Range(0, node.childs.Count - 1))
+            for (int i = 0; i < node.childs.Count -1; i++)
             {
                 Node iden = node.childs[i];
+                Console.WriteLine(iden.token.value);
                 scope.add(iden, type);
+                switch(type.token.value) {
+                    case "integer":
+                        text += "int " + iden.token.value + ";\n";
+                        break;
+                }
             }
         }
 
         private void editVariable(Node node, Scope scope)
         {
-            if (scope.variables.ContainsKey(node.token.value))
-            {
-                Element element = scope.variables[node.token.value];
-                Node value = node.childs[0].childs[0];
-                scope.edit(node.token.value, expression(value, scope));
-            }
-            else
-            {
-                Error e = new Error("SEMANTIC ERROR: undeclared variable " + node.token.value, node.token.line);
-                Console.WriteLine(e);
-            }
+            //Element element = scope.variables[node.token.value];
+            Node value = node.childs[0].childs[0];
+            scope.edit(node, expression(value, scope));
+
+        }
+
+        private void editArrayVariable(Node node, Scope scope)
+        {
+
+            Node value = node.childs[1].childs[0];
+            scope.edit(node, expression(value, scope));
+
         }
 
 
@@ -353,6 +392,7 @@ namespace MiniPl
             {
                 try
                 {
+                    //edit for arrays
                     return Convert.ToInt32(scope.get(node.token.value));
                 }
                 catch (Exception)

@@ -215,13 +215,11 @@ namespace MiniPl
                     var_declaration(parent);
                     return;
                 case TokenType.IDENTIFIER:
-                    if (peek() == TokenType.STATEMENT)
-                    {
-                        assignment(parent);
-                    }
-                    else if (peek() == TokenType.LEFT_PAREN)
+                    if (peek() == TokenType.LEFT_PAREN)
                     {
                         call_statement(parent);
+                    } else {
+                        assignment(parent);
                     }
                     return;
                 case TokenType.READ:

@@ -10,47 +10,47 @@ namespace MiniPl
     {
         static void Main(string[] args)
         {
-            while (true)
+            // while (true)
+            // {
+            Console.WriteLine("enter filename, or empty to exit");
+
+            string text = Console.ReadLine();
+
+            // if (text == "")
+            // {
+            //     break;
+            // }
+
+            if (System.IO.File.Exists(text))
             {
-                Console.WriteLine("enter filename, or empty to exit");
 
-                string text = Console.ReadLine();
+                string file = System.IO.File.ReadAllText(text);
 
-                if (text == "")
+                //Console.WriteLine(file);
+
+                Scanner scanner = new Scanner();
+                List<Token> tokens = scanner.scan(file);
+                Console.WriteLine(tokens.Count + " tokens");
+
+                foreach (var token in tokens)
                 {
-                    break;
+                    Console.WriteLine(token);
                 }
+                Console.WriteLine("");
 
-                if (System.IO.File.Exists(text))
-                {
-
-                    string file = System.IO.File.ReadAllText(text);
-
-                    //Console.WriteLine(file);
-
-                    Scanner scanner = new Scanner();
-                    List<Token> tokens = scanner.scan(file);
-                    Console.WriteLine(tokens.Count + " tokens");
-
-                    foreach (var token in tokens)
-                    {
-                        Console.WriteLine(token);
-                    }
-                    Console.WriteLine("");
-
-                    Parser parser = new Parser(tokens);
-                    Ast ast = parser.parse();
-                    ast.printChilds(ast.root);
-                    Semantic semantic = new Semantic(ast);
-                    //Console.WriteLine("Program start");
-                    semantic.start();
-                }
-                else
-                {
-                    Console.WriteLine("File not found");
-                }
-                Console.WriteLine();
+                Parser parser = new Parser(tokens);
+                Ast ast = parser.parse();
+                ast.printChilds(ast.root);
+                Semantic semantic = new Semantic(ast);
+                //Console.WriteLine("Program start");
+                semantic.start();
             }
+            else
+            {
+                Console.WriteLine("File not found");
+            }
+            Console.WriteLine();
+            //}
 
         }
     }
