@@ -66,7 +66,7 @@ namespace MiniPl
                 if (variables[key].type.Equals("array"))
                 {
                     int i = Convert.ToInt32(iden.childs[0].token.value);
-                    Console.WriteLine(variables[key].value.GetType());
+                    //Console.WriteLine(variables[key].value.GetType());
                     object[] array = ((Array)variables[key].value).Cast<object>().ToArray();
                     int[] ints = Array.ConvertAll(array, item => Convert.ToInt32(item));
                     ints[i] = Convert.ToInt32(value);
@@ -93,11 +93,11 @@ namespace MiniPl
             }
         }
 
-        public Object get(string key)
+        public Element get(string key)
         {
             if (variables.ContainsKey(key))
             {
-                return variables[key].value;
+                return variables[key];
             }
             else
             {
@@ -342,12 +342,20 @@ namespace MiniPl
             for (int i = 0; i < node.childs.Count - 1; i++)
             {
                 Node iden = node.childs[i];
-                Console.WriteLine(iden.token.value);
                 scope.add(iden, type);
                 switch (type.token.value)
                 {
                     case "integer":
                         text += "int " + iden.token.value + ";\n";
+                        break;
+                    case "real":
+                        text += "float " + iden.token.value + ";\n";
+                        break;
+                    case "string":
+                        text += "char " + iden.token.value + "[99];\n";
+                        break;
+                    case "boolean":
+                        text += "bool " + iden.token.value + ";\n";
                         break;
                 }
             }
@@ -358,7 +366,16 @@ namespace MiniPl
             //Element element = scope.variables[node.token.value];
             Node value = node.childs[0].childs[0];
             scope.edit(node, expression(value, scope));
-            text += node.token.value + " = " + getCurrentR() + ";\n";
+            //text += node.token.value + " = " + getCurrentR() + ";\n";
+            Element e = scope.get(node.token.value);
+            switch(e.type) {
+                case "string":
+                    text += "strcpy(" + node.token.value + ", " + getCurrentR() + ");\n";
+                    return;
+                default:
+                    text += node.token.value + " = " + getCurrentR() + ";\n";
+                    return;
+            }
         }
 
         private void editArrayVariable(Node node, Scope scope)
@@ -396,6 +413,25 @@ namespace MiniPl
                                 return stringOperation(node, scope);
                             case TokenType.BOOLEAN:
                                 return booleanOperation(node, scope);
+                            case TokenType.IDENTIFIER:
+                                Element e = scope.get(first.token.value);
+                                if (e.type.Equals("integer"))
+                                {
+                                    return integerOperation(node, scope);
+                                }
+                                else if (e.type.Equals("real"))
+                                {
+                                    return realOperation(node, scope);
+                                }
+                                else if (e.type.Equals("string"))
+                                {
+                                    return stringOperation(node, scope);
+                                }
+                                else if (e.type.Equals("boolean"))
+                                {
+                                    return booleanOperation(node, scope);
+                                }
+                                return null;
                         }
                     }
                     return null;
@@ -421,7 +457,7 @@ namespace MiniPl
                 {
                     //edit for arrays
                     text += "int " + nextR() + " = " + node.token.value + ";\n";
-                    return Convert.ToInt32(scope.get(node.token.value));
+                    return Convert.ToInt32(scope.get(node.token.value).value);
                 }
                 catch (Exception)
                 {
@@ -458,6 +494,7 @@ namespace MiniPl
                 }
                 else if (operation == TokenType.MODULO)
                 {
+                    text += "int " + nextR() + " = " + secondLastR() + " % " + lastR() + ";\n";
                     return leftint % rightint;
                 }
             }
@@ -473,13 +510,15 @@ namespace MiniPl
         {
             if (node.token.type == TokenType.REAL)
             {
+                text += "float " + nextR() + " = " + node.token.value + ";\n";
                 return float.Parse(node.token.value);
             }
             else if (node.token.type == TokenType.IDENTIFIER)
             {
                 try
                 {
-                    return float.Parse(Convert.ToString(scope.get(node.token.value)));
+                    text += "float " + nextR() + " = " + node.token.value + ";\n";
+                    return float.Parse(Convert.ToString(scope.get(node.token.value).value));
                 }
                 catch (Exception)
                 {
@@ -492,28 +531,32 @@ namespace MiniPl
                 TokenType operation = node.token.type;
                 Node left = node.childs[0];
                 Node right = node.childs[1];
-                float leftint = integerOperation(left, scope);
-                float rightint = integerOperation(right, scope);
+                float leftint = realOperation(left, scope);
+                float rightint = realOperation(right, scope);
                 if (operation == TokenType.PLUS)
                 {
+                    text += "float " + nextR() + " = " + secondLastR() + " + " + lastR() + ";\n";
                     return leftint + rightint;
                 }
                 else if (operation == TokenType.MINUS)
                 {
+                    text += "float " + nextR() + " = " + secondLastR() + " - " + lastR() + ";\n";
                     return leftint - rightint;
                 }
                 else if (operation == TokenType.STAR)
                 {
+                    text += "float " + nextR() + " = " + secondLastR() + " * " + lastR() + ";\n";
                     return leftint * rightint;
                 }
                 else if (operation == TokenType.SLASH)
                 {
+                    text += "float " + nextR() + " = " + secondLastR() + " / " + lastR() + ";\n";
                     return leftint / rightint;
                 }
             }
             else
             {
-                Error e = new Error("SEMANTIC ERROR: invalid type " + node.token.type + " ,expected int", node.token.line);
+                Error e = new Error("SEMANTIC ERROR: invalid type " + node.token.type + " ,expected real", node.token.line);
                 Console.WriteLine(e);
             }
             return 0;
@@ -523,13 +566,16 @@ namespace MiniPl
         {
             if (node.token.type == TokenType.STRING)
             {
+                text += "char " + nextR() + "[99] = \"" + node.token.value + "\";\n";
                 return Convert.ToString(node.token.value);
             }
             else if (node.token.type == TokenType.IDENTIFIER)
             {
                 try
                 {
-                    return Convert.ToString(scope.get(node.token.value));
+                    text += "char " + nextR() + "[99];\n";
+                    text += "strcpy(" + getCurrentR() + ", " + node.token.value + ");\n";
+                    return Convert.ToString(scope.get(node.token.value).value);
                 }
                 catch (Exception)
                 {
@@ -539,9 +585,13 @@ namespace MiniPl
             }
             else if (node.token.type == TokenType.PLUS)
             {
-                Node left = node.childs[0];
-                Node right = node.childs[1];
-                return stringOperation(left, scope) + stringOperation(right, scope);
+                Node leftNode = node.childs[0];
+                Node rightNode = node.childs[1];
+                string left = stringOperation(leftNode, scope);
+                string right = stringOperation(rightNode, scope);
+                text += "strcat(" + getCurrentR() + ", " + lastR() + ");\n";
+                //text += "char " + nextR() + "[99] = " + secondLastR() + " + " + lastR() + ";\n";
+                return left + right;
             }
             else
             {
@@ -559,7 +609,7 @@ namespace MiniPl
             {
                 try
                 {
-                    return Convert.ToBoolean(scope.get(node.token.value));
+                    return Convert.ToBoolean(scope.get(node.token.value).value);
                 }
                 catch (Exception)
                 {
@@ -663,29 +713,46 @@ namespace MiniPl
             Node printable = node.childs[0];
             if (printable.token.type == TokenType.IDENTIFIER)
             {
-                if (scope.variables.ContainsKey(printable.token.value))
+                Element e = scope.get(printable.token.value);
+
+
+                if (e.value == null)
                 {
-                    if (scope.variables[printable.token.value].value == null)
-                    {
-                        Error e = new Error("SEMANTIC ERROR: null variable " + printable.token.value, node.token.line);
-                        Console.WriteLine(e);
-                    }
-                    else
-                    {
-                        //text += "printf(" + printable.token.value + ");\n";
-                        //Console.Write(scope.variables[printable.token.value].value);
-                    }
+                    Error er = new Error("SEMANTIC ERROR: null variable " + printable.token.value, node.token.line);
+                    Console.WriteLine(er);
                 }
                 else
                 {
-                    Error e = new Error("SEMANTIC ERROR: undeclared variable " + node.token.value, node.token.line);
-                    Console.WriteLine(e);
+                    switch (e.type)
+                    {
+                        case "integer":
+                            text += "printf(\"%d\", " + printable.token.value + ");\n";
+                            return;
+                        case "real":
+                            text += "printf(\"%f\", " + printable.token.value + ");\n";
+                            return;
+                        case "string":
+                            text += "printf(\"%s\", " + printable.token.value + ");\n";
+                            return;
+                    }
                 }
+
+
             }
             else
             {
-                //text += "printf(" + printable.token.value + ");\n";
-                //Console.Write(printable.token.value);
+                switch (printable.token.type)
+                {
+                    case TokenType.INT:
+                        text += "printf(\"%d\", " + printable.token.value + ");\n";
+                        return;
+                    case TokenType.REAL:
+                        text += "printf(\"%f\", " + printable.token.value + ");\n";
+                        return;
+                    case TokenType.STRING:
+                        text += "printf(\"" + printable.token.value + "\");\n";
+                        return;
+                }
             }
         }
 
