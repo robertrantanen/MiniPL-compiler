@@ -29,7 +29,7 @@ namespace MiniPl
             keywords["do"] = TokenType.DO;
             keywords["read"] = TokenType.READ;
             keywords["assert"] = TokenType.ASSERT;
-            keywords["bool"] = TokenType.BOOLTYPE;
+            keywords["boolean"] = TokenType.BOOLTYPE;
             keywords["string"] = TokenType.STRINGTYPE;
             keywords["integer"] = TokenType.INTTYPE;
             keywords["and"] = TokenType.AND;
