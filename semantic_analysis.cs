@@ -359,6 +359,23 @@ namespace MiniPl
                     case "boolean":
                         text += "bool " + iden.token.value + ";\n";
                         break;
+                    case "array":
+                        int arrVal = Convert.ToInt32(type.childs[0].token.value);
+                        string arrType = type.childs[1].token.value;
+                        switch (arrType)
+                        {
+                            case "integer":
+                                text += "int " + iden.token.value + "[" + arrVal + "];\n";
+                                break;
+                            case "real":
+                                text += "float " + iden.token.value + "[" + arrVal + "];\n";
+                                break;
+                            case "string":
+                                break;
+                            case "boolean":
+                                break;
+                        }
+                        break;
                 }
             }
         }
@@ -386,13 +403,15 @@ namespace MiniPl
 
             Node value = node.childs[1].childs[0];
             scope.edit(node, expression(value, scope));
+            int i = Convert.ToInt32(node.childs[0].token.value);
+            text += node.token.value + "[" + i + "] = " + getCurrentR() + ";\n";
 
         }
 
 
         private Object expression(Node node, Scope scope)
         {
-            //Console.WriteLine(node.token.type);
+            //Console.WriteLine("TYPE " +node.token.type);
             switch (node.token.type)
             {
                 case TokenType.INT:
@@ -403,6 +422,9 @@ namespace MiniPl
                     return stringOperation(node, scope);
                 case TokenType.BOOLEAN:
                     return booleanOperation(node, scope);
+                case TokenType.IDENTIFIER:
+                    //edit
+                    return integerOperation(node, scope);
                 default:
                     if (operators.Contains(node.token.type))
                     {
@@ -460,9 +482,19 @@ namespace MiniPl
             {
                 try
                 {
-                    //edit for arrays
-                    text += "int " + nextR() + " = " + node.token.value + ";\n";
-                    return Convert.ToInt32(scope.get(node.token.value).value);
+                    if (node.childs.Count > 0)
+                    {
+                        int i = Convert.ToInt32(node.childs[0].token.value);
+                        text += "int " + nextR() + " = " + node.token.value + "[" + i + "];\n";
+                        object[] array = ((Array)scope.get(node.token.value).value).Cast<object>().ToArray();
+                        int[] ints = Array.ConvertAll(array, item => Convert.ToInt32(item));
+                        return ints[i];
+                    }
+                    else
+                    {
+                        text += "int " + nextR() + " = " + node.token.value + ";\n";
+                        return Convert.ToInt32(scope.get(node.token.value).value);
+                    }
                 }
                 catch (Exception)
                 {
