@@ -170,6 +170,7 @@ namespace MiniPl
         string text = "#include <stdio.h>\n#include <stdbool.h>\nint main() {\n";
 
         int currentR = 0;
+        int currentL = 0;
 
         public Semantic(Ast ast_)
         {
@@ -198,6 +199,24 @@ namespace MiniPl
             int i = currentR - 2;
             return "r" + i;
         }
+
+        public string nextL()
+        {
+            currentL++;
+            return "L" + currentL;
+        }
+
+        public string getCurrentL()
+        {
+            return "L" + currentL;
+        }
+
+        public string getFollowingL()
+        {
+            int i = currentL + 1;
+            return "L" + i;
+        }
+
 
         public void start()
         {
@@ -324,12 +343,39 @@ namespace MiniPl
 
         private void while_statement(Node node, Scope scope)
         {
-
+            Node stat = node.childs[0];
+            Node do_ = node.childs[1];
+            text += nextL() + ":\n";
+            int i = currentL;
+            statement(do_.childs[0], scope);
+            string s = stat.token.value;
+            if (s.Equals("<>")) {
+                s = "!=";
+            }
+            text += "if (";
+            text += stat.childs[0].token.value + s + stat.childs[1].token.value;
+            text += ") goto " + "L"+i + ";\n";
         }
 
         private void if_statement(Node node, Scope scope)
         {
+            Node stat = node.childs[0];
+            Node then = node.childs[1];
 
+            text += "if (";
+            text += stat.childs[0].token.value + stat.token.value + stat.childs[1].token.value;
+            text += ") goto " + nextL() + ";\n";
+
+            if (node.childs.Count() > 2) {
+                Node els = node.childs[2];
+                text += "else {\n";
+                statement(els.childs[0], scope);
+                text += "}\n";
+            }
+            text += "goto " + getFollowingL() + ";\n";
+            text += getCurrentL() + ":\n";
+            statement(then.childs[0], scope);
+            text += nextL() + ":\n";
         }
 
         private void call(Node node, Scope scope)
@@ -778,30 +824,22 @@ namespace MiniPl
             {
                 Element e = scope.get(printable.token.value);
 
+                switch (e.type)
+                {
+                    case "integer":
+                        text += "printf(\"%d\", " + printable.token.value + ");\n";
+                        return;
+                    case "real":
+                        text += "printf(\"%f\", " + printable.token.value + ");\n";
+                        return;
+                    case "string":
+                        text += "printf(\"%s\", " + printable.token.value + ");\n";
+                        return;
+                    case "boolean":
+                        text += "printf(\"%d\", " + printable.token.value + ");\n";
+                        return;
+                }
 
-                if (e.value == null)
-                {
-                    Error er = new Error("SEMANTIC ERROR: null variable " + printable.token.value, node.token.line);
-                    Console.WriteLine(er);
-                }
-                else
-                {
-                    switch (e.type)
-                    {
-                        case "integer":
-                            text += "printf(\"%d\", " + printable.token.value + ");\n";
-                            return;
-                        case "real":
-                            text += "printf(\"%f\", " + printable.token.value + ");\n";
-                            return;
-                        case "string":
-                            text += "printf(\"%s\", " + printable.token.value + ");\n";
-                            return;
-                        case "boolean":
-                            text += "printf(\"%d\", " + printable.token.value + ");\n";
-                            return;
-                    }
-                }
 
 
             }
@@ -824,34 +862,35 @@ namespace MiniPl
 
         private void read(Node node, Scope scope)
         {
-            Node readable = node.childs[0];
-            if (readable.token.type == TokenType.IDENTIFIER)
+            foreach (Node readable in node.childs)
             {
-                try
-                {
-                    Element e = scope.get(readable.token.value);
 
-                    if (e.type.Equals("string"))
-                    {
-                        text += "scanf(\"%s\", &" + readable.token.value + ");\n";
-                        // variables[readable.token.value].value = x;
-                    }
-                    else if (e.type.Equals("integer"))
-                    {
-                        text += "scanf(\"%d\", &" + readable.token.value + ");\n";
-                        // variables[readable.token.value].value = x;
-                    }
-                }
-                catch
+                if (readable.token.type == TokenType.IDENTIFIER)
                 {
-                    Error er = new Error("SEMANTIC ERROR: undeclared variable " + node.token.value, node.token.line);
-                    Console.WriteLine(er);
+                    try
+                    {
+                        Element e = scope.get(readable.token.value);
+
+                        if (e.type.Equals("string"))
+                        {
+                            text += "scanf(\"%s\", &" + readable.token.value + ");\n";
+                        }
+                        else if (e.type.Equals("integer"))
+                        {
+                            text += "scanf(\"%d\", &" + readable.token.value + ");\n";
+                        }
+                    }
+                    catch
+                    {
+                        Error er = new Error("SEMANTIC ERROR: undeclared variable " + node.token.value, node.token.line);
+                        Console.WriteLine(er);
+                    }
                 }
-            }
-            else
-            {
-                Error e = new Error("SEMANTIC ERROR: expected to read a variable", node.token.line);
-                Console.WriteLine(e);
+                else
+                {
+                    Error e = new Error("SEMANTIC ERROR: expected to read a variable", node.token.line);
+                    Console.WriteLine(e);
+                }
             }
         }
 
@@ -865,55 +904,7 @@ namespace MiniPl
             // }
         }
 
-        // private void forLoop(Node node, Scope scope)
-        // {
-        //     Node var = node.childs[0];
-        //     Node in_ = var.childs[0];
-        //     Node range = in_.childs[0];
-
-        //     Node start = range.childs[0];
-        //     Node end = range.childs[1];
-        //     int startVar = integerOperation(start);
-        //     int endVar = integerOperation(end);
-
-        //     Node do_ = in_.childs[1];
-
-        //     if (variables.ContainsKey(var.token.value))
-        //     {
-        //         if (variables[var.token.value].type.Equals("int"))
-        //         {
-        //             if (startVar <= endVar)
-        //             {
-        //                 variables[var.token.value].type = "control variable";
-        //                 variables[var.token.value].value = startVar;
-        //                 while (Convert.ToInt32(variables[var.token.value].value) <= endVar)
-        //                 {
-        //                     foreach (Node n in do_.childs)
-        //                     {
-        //                         statement(n);
-        //                     }
-        //                     variables[var.token.value].value = Convert.ToInt32(variables[var.token.value].value) + 1;
-        //                 }
-        //                 variables[var.token.value].type = "int";
-        //             }
-        //             else
-        //             {
-        //                 Error e = new Error("SEMANTIC ERROR: for loop start value should be smaller than end value", node.token.line);
-        //                 Console.WriteLine(e);
-        //             }
-        //         }
-        //         else
-        //         {
-        //             Error e = new Error("SEMANTIC ERROR: expected integer for loop variable", node.token.line);
-        //             Console.WriteLine(e);
-        //         }
-        //     }
-        //     else
-        //     {
-        //         Error e = new Error("SEMANTIC ERROR: undeclared variable " + node.token.value, node.token.line);
-        //         Console.WriteLine(e);
-        //     }
-        // }
+ 
 
     }
 }

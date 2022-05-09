@@ -351,7 +351,7 @@ namespace MiniPl
                 {
                     match(TokenType.SEMICOLON);
                 }
-                Node els = matchAddNode(then, TokenType.ELSE);
+                Node els = matchAddNode(p, TokenType.ELSE);
                 statement(els);
             }
         }
