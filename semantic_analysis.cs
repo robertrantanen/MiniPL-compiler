@@ -824,44 +824,35 @@ namespace MiniPl
 
         private void read(Node node, Scope scope)
         {
-            // Node readable = node.childs[0];
-            // Console.WriteLine();
-            // if (readable.token.type == TokenType.IDENTIFIER)
-            // {
-            //     if (variables.ContainsKey(readable.token.value))
-            //     {
-            //         Element element = variables[readable.token.value];
-            //         if (element.type.Equals("string"))
-            //         {
-            //             string x = Console.ReadLine();
-            //             variables[readable.token.value].value = x;
-            //         }
-            //         else if (element.type.Equals("int"))
-            //         {
-            //             try
-            //             {
-            //                 int x = Convert.ToInt32(Console.ReadLine());
-            //                 variables[readable.token.value].value = x;
-            //             }
-            //             catch
-            //             {
-            //                 Error e = new Error("SEMANTIC ERROR: expected to read int", node.token.line);
-            //                 Console.WriteLine(e);
-            //             }
+            Node readable = node.childs[0];
+            if (readable.token.type == TokenType.IDENTIFIER)
+            {
+                try
+                {
+                    Element e = scope.get(readable.token.value);
 
-            //         }
-            //     }
-            //     else
-            //     {
-            //         Error e = new Error("SEMANTIC ERROR: undeclared variable " + node.token.value, node.token.line);
-            //         Console.WriteLine(e);
-            //     }
-            // }
-            // else
-            // {
-            //     Error e = new Error("SEMANTIC ERROR: expected to read a variable", node.token.line);
-            //     Console.WriteLine(e);
-            // }
+                    if (e.type.Equals("string"))
+                    {
+                        text += "scanf(\"%s\", &" + readable.token.value + ");\n";
+                        // variables[readable.token.value].value = x;
+                    }
+                    else if (e.type.Equals("integer"))
+                    {
+                        text += "scanf(\"%d\", &" + readable.token.value + ");\n";
+                        // variables[readable.token.value].value = x;
+                    }
+                }
+                catch
+                {
+                    Error er = new Error("SEMANTIC ERROR: undeclared variable " + node.token.value, node.token.line);
+                    Console.WriteLine(er);
+                }
+            }
+            else
+            {
+                Error e = new Error("SEMANTIC ERROR: expected to read a variable", node.token.line);
+                Console.WriteLine(e);
+            }
         }
 
 
