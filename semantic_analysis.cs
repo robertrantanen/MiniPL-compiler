@@ -345,16 +345,18 @@ namespace MiniPl
         {
             Node stat = node.childs[0];
             Node do_ = node.childs[1];
-            text += nextL() + ":\n";
+            text += nextL() + ": ;\n";
             int i = currentL;
             statement(do_.childs[0], scope);
             string s = stat.token.value;
-            if (s.Equals("<>")) {
+            if (s.Equals("<>"))
+            {
                 s = "!=";
             }
             text += "if (";
-            text += stat.childs[0].token.value + s + stat.childs[1].token.value;
-            text += ") goto " + "L"+i + ";\n";
+            printOperation(stat, scope);
+            //text += stat.childs[0].token.value + s + stat.childs[1].token.value;
+            text += ") goto " + "L" + i + ";\n";
         }
 
         private void if_statement(Node node, Scope scope)
@@ -363,19 +365,21 @@ namespace MiniPl
             Node then = node.childs[1];
 
             text += "if (";
-            text += stat.childs[0].token.value + stat.token.value + stat.childs[1].token.value;
+            printOperation(stat, scope);
+            //text += stat.childs[0].token.value + stat.token.value + stat.childs[1].token.value;
             text += ") goto " + nextL() + ";\n";
 
-            if (node.childs.Count() > 2) {
+            if (node.childs.Count() > 2)
+            {
                 Node els = node.childs[2];
                 text += "else {\n";
                 statement(els.childs[0], scope);
                 text += "}\n";
             }
             text += "goto " + getFollowingL() + ";\n";
-            text += getCurrentL() + ":\n";
+            text += getCurrentL() + ": ;\n";
             statement(then.childs[0], scope);
-            text += nextL() + ":\n";
+            text += nextL() + ": ;\n";
         }
 
         private void call(Node node, Scope scope)
@@ -815,6 +819,45 @@ namespace MiniPl
             return false;
         }
 
+        private void printOperation(Node node, Scope scope)
+        {
+            if (operators.Contains(node.token.type))
+            {
+                if (node.token.type == TokenType.NOT)
+                {
+                    text += "!";
+                    printOperation(node.childs[0], scope);
+                }
+                else
+                {
+                    printOperation(node.childs[0], scope);
+                    string s = node.token.value;
+                    if (node.token.type == TokenType.OR)
+                    {
+                        s = "||";
+                    }
+                    else if (node.token.type == TokenType.AND)
+                    {
+                        s = "&&";
+                    }
+                    else if (node.token.type == TokenType.NOTEQUAL)
+                    {
+                        s = "!=";
+                    }
+                    else if (node.token.type == TokenType.EQUAL)
+                    {
+                        s = "==";
+                    }
+                    text += s;
+                    printOperation(node.childs[1], scope);
+                }
+            }
+            else
+            {
+                text += node.token.value;
+            }
+        }
+
 
 
         private void print(Node node, Scope scope)
@@ -904,7 +947,7 @@ namespace MiniPl
             // }
         }
 
- 
+
 
     }
 }
