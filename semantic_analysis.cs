@@ -276,9 +276,47 @@ namespace MiniPl
             Node name = node.childs[0];
             List<Node> parameters = name.childs.GetRange(0, name.childs.Count - 2);
             Node type = name.childs[name.childs.Count - 2];
-            functions.Add(name.token.value, new CustomFunction(parameters, type.token.value, node));
-            //Node begin = name.childs[name.childs.Count - 1];
-            //block(begin, scope);
+            //functions.Add(name.token.value, new CustomFunction(parameters, type.token.value, node));
+            Node begin = name.childs[name.childs.Count - 1];
+            string t = "";
+            switch (type.token.value)
+            {
+                case "integer":
+                    t ="int ";
+                    break;
+                case "real":
+                    t = "float ";
+                    break;
+                case "string":
+                    t = "const char* ";
+                    break;
+                case "boolean":
+                    t = "bool ";
+                    break;
+            }
+            text += t + name.token.value + "(";
+            foreach (Node n in parameters)
+            {
+                switch (n.childs[0].token.value)
+                {
+                    case "integer":
+                        text += "int " + n.token.value + ", ";
+                        break;
+                    case "real":
+                        text += "float " + n.token.value + ", ";
+                        break;
+                    case "string":
+                        text += "char " + n.token.value + "[], ";
+                        break;
+                    case "boolean":
+                        text += "bool " + n.token.value + ", ";
+                        break;
+                }
+            }
+            text = text.Substring(0, text.Length - 2);
+            text += ") {\n";
+            block(begin, scope);
+            text += "}\n";
         }
 
         private void procedure_declaration(Node node, Scope scope)
@@ -287,7 +325,27 @@ namespace MiniPl
             List<Node> parameters = name.childs.GetRange(0, name.childs.Count - 1);
             //functions.Add(name.token.value, new CustomFunction(parameters, "null", node));
             Node begin = name.childs[name.childs.Count - 1];
-            text += "void " + name.token.value + "() {\n";
+            text += "void " + name.token.value + "(";
+            foreach (Node n in parameters)
+            {
+                switch (n.childs[0].token.value)
+                {
+                    case "integer":
+                        text += "int " + n.token.value + ", ";
+                        break;
+                    case "real":
+                        text += "float " + n.token.value + ", ";
+                        break;
+                    case "string":
+                        text += "char " + n.token.value + "[], ";
+                        break;
+                    case "boolean":
+                        text += "bool " + n.token.value + ", ";
+                        break;
+                }
+            }
+            text = text.Substring(0, text.Length - 2);
+            text += ") {\n";
             block(begin, scope);
             text += "}\n";
         }
@@ -306,12 +364,13 @@ namespace MiniPl
                         {
                             editVariable(node, scope);
                         }
-                        else if (node.childs.Count > 1)
+                        else if (node.childs.Count > 1 && node.childs[1].token.type == TokenType.STATEMENT)
                         {
-                            if (node.childs[1].token.type == TokenType.STATEMENT)
-                            {
-                                editArrayVariable(node, scope);
-                            }
+                            editArrayVariable(node, scope);
+                        }
+                        else
+                        {
+                            call(node, scope);
                         }
                     }
                     catch
@@ -345,7 +404,12 @@ namespace MiniPl
 
         private void return_statement(Node node, Scope scope)
         {
-
+            text += "return ";
+            if (node.childs.Count > 0)
+            {
+                printOperation(node.childs[0], scope);
+            }
+            text += ";\n";
         }
 
         private void while_statement(Node node, Scope scope)
@@ -386,7 +450,24 @@ namespace MiniPl
 
         private void call(Node node, Scope scope)
         {
-            text += node.token.value + "();\n";
+            Console.WriteLine("CALLED");
+            text += node.token.value + "(";
+            if (node.childs.Count > 0)
+            {
+                foreach (Node n in node.childs)
+                {
+                    if (n.token.type == TokenType.STRING)
+                    {
+                        text += "\"" + n.token.value + "\", ";
+                    }
+                    else
+                    {
+                        text += n.token.value + ", ";
+                    }
+                }
+                text = text.Substring(0, text.Length - 2);
+            }
+            text += ");\n";
         }
 
         private void defineVariable(Node node, Scope scope)
@@ -865,41 +946,42 @@ namespace MiniPl
         private void print(Node node, Scope scope)
         {
             Node printable = node.childs[0];
-            if (printable.token.type == TokenType.IDENTIFIER)
-            {
-                Element e = scope.get(printable.token.value);
+            text += "printf(\"%s\", " + printable.token.value + ");\n";
+            // if (printable.token.type == TokenType.IDENTIFIER)
+            // {
+            //     Element e = scope.get(printable.token.value);
 
-                switch (e.type)
-                {
-                    case "integer":
-                        text += "printf(\"%d\", " + printable.token.value + ");\n";
-                        return;
-                    case "real":
-                        text += "printf(\"%f\", " + printable.token.value + ");\n";
-                        return;
-                    case "string":
-                        text += "printf(\"%s\", " + printable.token.value + ");\n";
-                        return;
-                    case "boolean":
-                        text += "printf(\"%d\", " + printable.token.value + ");\n";
-                        return;
-                }
-            }
-            else
-            {
-                switch (printable.token.type)
-                {
-                    case TokenType.INT:
-                        text += "printf(\"%d\", " + printable.token.value + ");\n";
-                        return;
-                    case TokenType.REAL:
-                        text += "printf(\"%f\", " + printable.token.value + ");\n";
-                        return;
-                    case TokenType.STRING:
-                        text += "printf(\"" + printable.token.value + "\");\n";
-                        return;
-                }
-            }
+            //     switch (e.type)
+            //     {
+            //         case "integer":
+            //             text += "printf(\"%d\", " + printable.token.value + ");\n";
+            //             return;
+            //         case "real":
+            //             text += "printf(\"%f\", " + printable.token.value + ");\n";
+            //             return;
+            //         case "string":
+            //             text += "printf(\"%s\", " + printable.token.value + ");\n";
+            //             return;
+            //         case "boolean":
+            //             text += "printf(\"%d\", " + printable.token.value + ");\n";
+            //             return;
+            //     }
+            // }
+            // else
+            // {
+            //     switch (printable.token.type)
+            //     {
+            //         case TokenType.INT:
+            //             text += "printf(\"%d\", " + printable.token.value + ");\n";
+            //             return;
+            //         case TokenType.REAL:
+            //             text += "printf(\"%f\", " + printable.token.value + ");\n";
+            //             return;
+            //         case TokenType.STRING:
+            //             text += "printf(\"" + printable.token.value + "\");\n";
+            //             return;
+            //     }
+            // }
         }
 
         private void read(Node node, Scope scope)
