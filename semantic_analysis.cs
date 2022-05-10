@@ -167,7 +167,7 @@ namespace MiniPl
         static private List<TokenType> operators = new List<TokenType>() { TokenType.PLUS, TokenType.MINUS, TokenType.STAR, TokenType.SLASH, TokenType.MODULO, TokenType.AND, TokenType.OR, TokenType.EQUAL, TokenType.LESS, TokenType.GREATER, TokenType.EQUALGREATER, TokenType.EQUALLESS, TokenType.NOTEQUAL, TokenType.NOT };
 
         static private List<TokenType> booleanOperators = new List<TokenType>() { TokenType.AND, TokenType.OR, TokenType.EQUAL, TokenType.LESS, TokenType.GREATER, TokenType.EQUALGREATER, TokenType.EQUALLESS, TokenType.NOTEQUAL, TokenType.NOT };
-        string text = "#include <stdio.h>\n#include <stdbool.h>\nint main() {\n";
+        string text = "#include <stdio.h>\n#include <stdbool.h>\n";
 
         int currentR = 0;
         int currentL = 0;
@@ -228,17 +228,18 @@ namespace MiniPl
             {
                 startBlock(node, global);
             }
-            global.printVariables();
-            foreach (KeyValuePair<string, CustomFunction> k in functions)
-            {
-                List<Node> param = k.Value.parameters;
-                Console.WriteLine("Key: {0}, Type: {1}", k.Key, k.Value.type);
-                Console.WriteLine("parameters:");
-                foreach (Node n in param)
-                {
-                    Console.WriteLine(n.token.value);
-                }
-            }
+            // global.printVariables();
+            // foreach (KeyValuePair<string, CustomFunction> k in functions)
+            // {
+            //     List<Node> param = k.Value.parameters;
+            //     Console.WriteLine("Key: {0}, Type: {1}", k.Key, k.Value.type);
+            //     Console.WriteLine("parameters:");
+            //     foreach (Node n in param)
+            //     {
+            //         Console.WriteLine(n.token.value);
+            //     }
+            // }
+
             //gcc -o program program.c
             //./program
             text += "\n}";
@@ -250,6 +251,7 @@ namespace MiniPl
             switch (node.token.type)
             {
                 case TokenType.BEGIN:
+                    text += "int main() {\n";
                     block(node, scope);
                     return;
                 case TokenType.FUNCTION:
@@ -283,9 +285,11 @@ namespace MiniPl
         {
             Node name = node.childs[0];
             List<Node> parameters = name.childs.GetRange(0, name.childs.Count - 1);
-            functions.Add(name.token.value, new CustomFunction(parameters, "null", node));
-            //Node begin = name.childs[name.childs.Count - 1];
-            //block(begin, scope);
+            //functions.Add(name.token.value, new CustomFunction(parameters, "null", node));
+            Node begin = name.childs[name.childs.Count - 1];
+            text += "void " + name.token.value + "() {\n";
+            block(begin, scope);
+            text += "}\n";
         }
 
         private void statement(Node node, Scope scope)
@@ -296,18 +300,21 @@ namespace MiniPl
                     defineVariable(node, scope);
                     return;
                 case TokenType.IDENTIFIER:
-                    if (node.childs[0].token.type == TokenType.STATEMENT)
+                    try
                     {
-                        editVariable(node, scope);
-                    }
-                    else if (node.childs.Count > 1)
-                    {
-                        if (node.childs[1].token.type == TokenType.STATEMENT)
+                        if (node.childs[0].token.type == TokenType.STATEMENT)
                         {
-                            editArrayVariable(node, scope);
+                            editVariable(node, scope);
+                        }
+                        else if (node.childs.Count > 1)
+                        {
+                            if (node.childs[1].token.type == TokenType.STATEMENT)
+                            {
+                                editArrayVariable(node, scope);
+                            }
                         }
                     }
-                    else
+                    catch
                     {
                         call(node, scope);
                     }
@@ -347,12 +354,7 @@ namespace MiniPl
             Node do_ = node.childs[1];
             text += nextL() + ": ;\n";
             int i = currentL;
-            statement(do_.childs[0], scope);
-            string s = stat.token.value;
-            if (s.Equals("<>"))
-            {
-                s = "!=";
-            }
+            block(do_, scope);
             text += "if (";
             printOperation(stat, scope);
             //text += stat.childs[0].token.value + s + stat.childs[1].token.value;
@@ -384,7 +386,7 @@ namespace MiniPl
 
         private void call(Node node, Scope scope)
         {
-
+            text += node.token.value + "();\n";
         }
 
         private void defineVariable(Node node, Scope scope)
@@ -882,9 +884,6 @@ namespace MiniPl
                         text += "printf(\"%d\", " + printable.token.value + ");\n";
                         return;
                 }
-
-
-
             }
             else
             {
