@@ -468,7 +468,8 @@ namespace MiniPl
                     }
                     else
                     {
-                        text += n.token.value + ", ";
+                        printOperation(n, scope);
+                        text += ", ";
                     }
                 }
                 text = text.Substring(0, text.Length - 2);
@@ -563,7 +564,25 @@ namespace MiniPl
                     return booleanOperation(node, scope);
                 case TokenType.IDENTIFIER:
                     //edit
-                    return integerOperation(node, scope);
+                    Element e2 = scope.get(node.token.value);
+                    switch (e2.type)
+                    {
+                        case "integer":
+                            return integerOperation(node, scope);
+                        case "real":
+                            return realOperation(node, scope);
+                        case "string":
+                            return stringOperation(node, scope);
+                        case "boolean":
+                            return booleanOperation(node, scope);
+                        case "null":
+                            text += "int " + nextR() + " = ";
+                            call(node, scope);
+                            text += ";\n";
+                            return null;
+                        default:
+                            return null;
+                    }
                 default:
                     if (operators.Contains(node.token.type))
                     {
@@ -943,14 +962,20 @@ namespace MiniPl
             }
             else
             {
-                if (node.token.type == TokenType.IDENTIFIER) {
+                if (node.token.type == TokenType.IDENTIFIER)
+                {
                     Element e = scope.get(node.token.value);
-                    if (e.type.Equals("null")) {
+                    if (e.type.Equals("null"))
+                    {
                         call(node, scope);
-                    } else {
+                    }
+                    else
+                    {
                         text += node.token.value;
                     }
-                } else {
+                }
+                else
+                {
                     text += node.token.value;
                 }
             }
@@ -960,49 +985,56 @@ namespace MiniPl
 
         private void print(Node node, Scope scope)
         {
-            Node printable = node.childs[0];
-            //text += "printf(\"%s\", " + printable.token.value + ");\n";
-            if (printable.token.type == TokenType.IDENTIFIER)
+            foreach (Node printable in node.childs)
             {
-                try
+                //text += "printf(\"%s\", " + printable.token.value + ");\n";
+                if (printable.token.type == TokenType.IDENTIFIER)
                 {
-                    Element e = scope.get(printable.token.value);
-
-                    switch (e.type)
+                    try
                     {
-                        case "integer":
+                        Element e = scope.get(printable.token.value);
+
+                        switch (e.type)
+                        {
+                            case "integer":
+                                text += "printf(\"%d\", " + printable.token.value + ");\n";
+                                return;
+                            case "real":
+                                text += "printf(\"%f\", " + printable.token.value + ");\n";
+                                return;
+                            case "string":
+                                text += "printf(\"%s\", " + printable.token.value + ");\n";
+                                return;
+                            case "boolean":
+                                text += "printf(\"%d\", " + printable.token.value + ");\n";
+                                return;
+                            case "null":
+                                text += "printf(\"%d\", ";
+                                call(printable, scope);
+                                text += ");\n";
+                                return;
+                        }
+                    }
+                    catch
+                    {
+                        text += "printf(\"%s\", " + printable.token.value + ");\n";
+                    }
+
+                }
+                else
+                {
+                    switch (printable.token.type)
+                    {
+                        case TokenType.INT:
                             text += "printf(\"%d\", " + printable.token.value + ");\n";
                             return;
-                        case "real":
+                        case TokenType.REAL:
                             text += "printf(\"%f\", " + printable.token.value + ");\n";
                             return;
-                        case "string":
-                            text += "printf(\"%s\", " + printable.token.value + ");\n";
-                            return;
-                        case "boolean":
-                            text += "printf(\"%d\", " + printable.token.value + ");\n";
+                        case TokenType.STRING:
+                            text += "printf(\"" + printable.token.value + "\");\n";
                             return;
                     }
-                } catch {
-                    Console.WriteLine(printable.token.value);
-                    Console.WriteLine(printable.token.type);
-                    text += "printf(\"%s\", " + printable.token.value + ");\n";
-                }
-
-            }
-            else
-            {
-                switch (printable.token.type)
-                {
-                    case TokenType.INT:
-                        text += "printf(\"%d\", " + printable.token.value + ");\n";
-                        return;
-                    case TokenType.REAL:
-                        text += "printf(\"%f\", " + printable.token.value + ");\n";
-                        return;
-                    case TokenType.STRING:
-                        text += "printf(\"" + printable.token.value + "\");\n";
-                        return;
                 }
             }
         }
