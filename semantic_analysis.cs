@@ -322,7 +322,11 @@ namespace MiniPl
                     case "boolean":
                         text += "bool " + n.token.value + ", ";
                         break;
-                    //array
+                    case "array":
+                        text += "int " + n.token.value + "[], ";
+                        break;
+
+                        //array
                 }
                 newScope.add(n, n.childs[0]);
             }
@@ -355,6 +359,9 @@ namespace MiniPl
                         break;
                     case "boolean":
                         text += "bool " + n.token.value + ", ";
+                        break;
+                    case "array":
+                        text += "int " + n.token.value + "[], ";
                         break;
                 }
                 newScope.add(n, n.childs[0]);
@@ -992,14 +999,21 @@ namespace MiniPl
                     {
                         call(node, scope);
                     }
-                    else if (e.type.Equals("array")) {
-                        if (node.childs[0].token.type == TokenType.SIZE) {
+                    else if (e.type.Equals("array"))
+                    {
+                        if (node.childs[0].token.type == TokenType.SIZE)
+                        {
                             text += "sizeof(" + node.token.value + ") / sizeof(" + node.token.value + "[0])";
-                        } else {
-                            try {
+                        }
+                        else
+                        {
+                            try
+                            {
                                 string i = node.childs[0].token.value;
                                 text += node.token.value + "[" + i + "]";
-                            } catch {
+                            }
+                            catch
+                            {
                                 Console.WriteLine("error");
                             }
                         }

@@ -53,13 +53,13 @@ namespace MiniPl
             return null;
         }
 
-        private Node matchAddNextNodeWithoutAdvancing(Node parent, params TokenType[] types)
+        private Node matchAddNextNodeWithoutAdvancing(Node parent, int i, params TokenType[] types)
         {
             foreach (TokenType type in types)
             {
-                if (tokens[current + 1].type == type)
+                if (tokens[current + i].type == type)
                 {
-                    Node node = ast.add(tokens[current + 1], parent);
+                    Node node = ast.add(tokens[current + i], parent);
                     return node;
                 }
             }
@@ -401,6 +401,24 @@ namespace MiniPl
             }
             else if (check(TokenType.IDENTIFIER))
             {
+                if (peek() == TokenType.DOT)
+                {
+                    if (operators.Contains(tokens[current + 3].type))
+                    {
+                        Node n = matchAddNextNodeWithoutAdvancing(parent, 3, operators.ToArray());
+                        operand(n);
+                        current++;
+                        operand(n);
+                    }
+                } else if (peek() == TokenType.LEFT_BRACKET) {
+                    if (operators.Contains(tokens[current + 4].type))
+                    {
+                        Node n = matchAddNextNodeWithoutAdvancing(parent, 4, operators.ToArray());
+                        operand(n);
+                        current++;
+                        operand(n);
+                    }
+                }
                 operand(parent);
             }
             else
@@ -411,7 +429,7 @@ namespace MiniPl
 
         private void binaryExpression(Node parent)
         {
-            Node n = matchAddNextNodeWithoutAdvancing(parent, operators.ToArray());
+            Node n = matchAddNextNodeWithoutAdvancing(parent, 1, operators.ToArray());
             operand(n);
             current++;
             operand(n);
@@ -438,9 +456,11 @@ namespace MiniPl
                     {
                         match(TokenType.DOT);
                         matchAddNode(p, TokenType.SIZE);
-                    } else if (check(TokenType.LEFT_BRACKET)) {
+                    }
+                    else if (check(TokenType.LEFT_BRACKET))
+                    {
                         match(TokenType.LEFT_BRACKET);
-                        expression(p);
+                        matchAddNode(p, TokenType.INT);
                         match(TokenType.RIGHT_BRACKET);
                     }
                 }
