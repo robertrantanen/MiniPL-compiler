@@ -218,7 +218,9 @@ namespace MiniPl
                     if (peek() == TokenType.LEFT_PAREN)
                     {
                         call_statement(parent);
-                    } else {
+                    }
+                    else
+                    {
                         assignment(parent);
                     }
                     return;
@@ -396,7 +398,9 @@ namespace MiniPl
             if (operators.Contains(peek()))
             {
                 binaryExpression(parent);
-            } else if (check(TokenType.IDENTIFIER)) {
+            }
+            else if (check(TokenType.IDENTIFIER))
+            {
                 operand(parent);
             }
             else
@@ -429,17 +433,21 @@ namespace MiniPl
                 }
                 else
                 {
-                    variable(parent);
+                    Node p = variable(parent);
+                    if (check(TokenType.DOT))
+                    {
+                        match(TokenType.DOT);
+                        matchAddNode(p, TokenType.SIZE);
+                    } else if (check(TokenType.LEFT_BRACKET)) {
+                        match(TokenType.LEFT_BRACKET);
+                        expression(p);
+                        match(TokenType.RIGHT_BRACKET);
+                    }
                 }
             }
             else
             {
                 matchAddNode(parent, TokenType.INT, TokenType.STRING, TokenType.IDENTIFIER, TokenType.REAL, TokenType.BOOLEAN);
-            }
-            if (check(TokenType.DOT))
-            {
-                match(TokenType.DOT);
-                matchAddNode(parent, TokenType.SIZE);
             }
         }
 

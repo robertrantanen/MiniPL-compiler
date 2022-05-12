@@ -27,8 +27,17 @@ namespace MiniPl
             {
                 if (type.Equals("array"))
                 {
-                    int arrVal = Convert.ToInt32(typeNode.childs[0].token.value);
-                    string arrType = typeNode.childs[1].token.value;
+                    int arrVal = 99;
+                    string arrType = "";
+                    if (typeNode.childs.Count > 1)
+                    {
+                        arrVal = Convert.ToInt32(typeNode.childs[0].token.value);
+                        arrType = typeNode.childs[1].token.value;
+                    }
+                    else
+                    {
+                        arrType = typeNode.childs[0].token.value;
+                    }
                     switch (arrType)
                     {
                         case "integer":
@@ -313,6 +322,7 @@ namespace MiniPl
                     case "boolean":
                         text += "bool " + n.token.value + ", ";
                         break;
+                    //array
                 }
                 newScope.add(n, n.childs[0]);
             }
@@ -436,6 +446,7 @@ namespace MiniPl
         {
             Node stat = node.childs[0];
             Node then = node.childs[1];
+
 
             text += "if (";
             printOperation(stat, scope);
@@ -565,6 +576,15 @@ namespace MiniPl
                 case TokenType.IDENTIFIER:
                     //edit
                     Element e2 = scope.get(node.token.value);
+                    if (node.childs.Count > 0)
+                    {
+                        if (node.childs[0].token.type == TokenType.SIZE)
+                        {
+                            object[] array = ((Array)scope.get(node.token.value).value).Cast<object>().ToArray();
+                            text += "int " + nextR() + " = sizeof(" + node.token.value + ") / sizeof(" + node.token.value + "[0]);\n";
+                            return array.Length;
+                        }
+                    }
                     switch (e2.type)
                     {
                         case "integer":
@@ -575,6 +595,9 @@ namespace MiniPl
                             return stringOperation(node, scope);
                         case "boolean":
                             return booleanOperation(node, scope);
+                        case "array":
+                            //edit for others
+                            return integerOperation(node, scope);
                         case "null":
                             text += "int " + nextR() + " = ";
                             call(node, scope);
@@ -968,6 +991,18 @@ namespace MiniPl
                     if (e.type.Equals("null"))
                     {
                         call(node, scope);
+                    }
+                    else if (e.type.Equals("array")) {
+                        if (node.childs[0].token.type == TokenType.SIZE) {
+                            text += "sizeof(" + node.token.value + ") / sizeof(" + node.token.value + "[0])";
+                        } else {
+                            try {
+                                string i = node.childs[0].token.value;
+                                text += node.token.value + "[" + i + "]";
+                            } catch {
+                                Console.WriteLine("error");
+                            }
+                        }
                     }
                     else
                     {
