@@ -132,24 +132,6 @@ namespace MiniPl
 
     }
 
-    class CustomFunction
-    {
-
-        public List<Node> parameters { get; set; }
-
-        public string type { get; set; }
-
-        public Node node { get; set; }
-
-
-        public CustomFunction(List<Node> parameters_, string type_, Node node_)
-        {
-            parameters = parameters_;
-            type = type_;
-            node = node_;
-        }
-
-    }
 
     class Element
     {
@@ -170,9 +152,6 @@ namespace MiniPl
     {
 
         static private Ast ast;
-        Dictionary<string, Element> variables;
-
-        Dictionary<string, CustomFunction> functions;
 
         static private List<TokenType> operators = new List<TokenType>() { TokenType.PLUS, TokenType.MINUS, TokenType.STAR, TokenType.SLASH, TokenType.MODULO, TokenType.AND, TokenType.OR, TokenType.EQUAL, TokenType.LESS, TokenType.GREATER, TokenType.EQUALGREATER, TokenType.EQUALLESS, TokenType.NOTEQUAL, TokenType.NOT };
 
@@ -230,8 +209,6 @@ namespace MiniPl
 
         public void start()
         {
-            variables = new Dictionary<string, Element>();
-            functions = new Dictionary<string, CustomFunction>();
             Scope global = new Scope(new Dictionary<string, Element>(), null);
             Node program = ast.root.childs[0];
             foreach (Node node in program.childs)
@@ -239,16 +216,6 @@ namespace MiniPl
                 startBlock(node, global);
             }
             // global.printVariables();
-            // foreach (KeyValuePair<string, CustomFunction> k in functions)
-            // {
-            //     List<Node> param = k.Value.parameters;
-            //     Console.WriteLine("Key: {0}, Type: {1}", k.Key, k.Value.type);
-            //     Console.WriteLine("parameters:");
-            //     foreach (Node n in param)
-            //     {
-            //         Console.WriteLine(n.token.value);
-            //     }
-            // }
 
             //gcc -o program program.c
             //./program
@@ -672,11 +639,12 @@ namespace MiniPl
                 {
                     if (node.childs.Count > 0)
                     {
-                        int i = Convert.ToInt32(node.childs[0].token.value);
+                        string i = node.childs[0].token.value;
                         text += "int " + nextR() + " = " + node.token.value + "[" + i + "];\n";
-                        object[] array = ((Array)scope.get(node.token.value).value).Cast<object>().ToArray();
-                        int[] ints = Array.ConvertAll(array, item => Convert.ToInt32(item));
-                        return ints[i];
+                        // object[] array = ((Array)scope.get(node.token.value).value).Cast<object>().ToArray();
+                        // int[] ints = Array.ConvertAll(array, item => Convert.ToInt32(item));
+                        // return ints[i];
+                        return 0;
                     }
                     else
                     {
@@ -1001,22 +969,21 @@ namespace MiniPl
                     }
                     else if (e.type.Equals("array"))
                     {
-                        if (node.childs[0].token.type == TokenType.SIZE)
+                        if (node.childs.Count > 0)
                         {
-                            text += "sizeof(" + node.token.value + ") / sizeof(" + node.token.value + "[0])";
-                        }
-                        else
-                        {
-                            try
+                            if (node.childs[0].token.type == TokenType.SIZE)
+                            {
+                                text += "sizeof(" + node.token.value + ") / sizeof(" + node.token.value + "[0])";
+                            }
+                            else
                             {
                                 string i = node.childs[0].token.value;
                                 text += node.token.value + "[" + i + "]";
                             }
-                            catch
-                            {
-                                Console.WriteLine("error");
-                            }
+                        } else {
+                            text += node.token.value;
                         }
+
                     }
                     else
                     {
@@ -1047,21 +1014,26 @@ namespace MiniPl
                         {
                             case "integer":
                                 text += "printf(\"%d\", " + printable.token.value + ");\n";
-                                return;
+                                break;
                             case "real":
                                 text += "printf(\"%f\", " + printable.token.value + ");\n";
-                                return;
+                                break;
                             case "string":
                                 text += "printf(\"%s\", " + printable.token.value + ");\n";
-                                return;
+                                break;
                             case "boolean":
                                 text += "printf(\"%d\", " + printable.token.value + ");\n";
-                                return;
+                                break;
+                            case "array":
+                                string i = printable.childs[0].token.value;
+                                text += "printf(\"%d\", " + printable.token.value + "[" + i + "]);\n";
+                                break;
                             case "null":
+                                Console.WriteLine(printable.token.value);
                                 text += "printf(\"%d\", ";
                                 call(printable, scope);
                                 text += ");\n";
-                                return;
+                                break;
                         }
                     }
                     catch
@@ -1076,13 +1048,13 @@ namespace MiniPl
                     {
                         case TokenType.INT:
                             text += "printf(\"%d\", " + printable.token.value + ");\n";
-                            return;
+                            break;
                         case TokenType.REAL:
                             text += "printf(\"%f\", " + printable.token.value + ");\n";
-                            return;
+                            break;
                         case TokenType.STRING:
                             text += "printf(\"" + printable.token.value + "\");\n";
-                            return;
+                            break;
                     }
                 }
             }
@@ -1106,6 +1078,11 @@ namespace MiniPl
                         else if (e.type.Equals("integer"))
                         {
                             text += "scanf(\"%d\", &" + readable.token.value + ");\n";
+                        }
+                        else if (e.type.Equals("array"))
+                        {
+                            string i = readable.childs[0].token.value;
+                            text += "scanf(\"%d\", &" + readable.token.value + "[" + i + "]);\n";
                         }
                     }
                     catch

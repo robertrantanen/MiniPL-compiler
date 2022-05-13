@@ -251,7 +251,7 @@ namespace MiniPl
         private void var_declaration(Node parent)
         {
             Node p = matchAddNode(parent, TokenType.VAR);
-            Node id = matchAddNode(p, TokenType.IDENTIFIER);
+            matchAddNode(p, TokenType.IDENTIFIER);
             while (check(TokenType.COMMA))
             {
                 match(TokenType.COMMA);
