@@ -71,19 +71,13 @@ namespace MiniPl
             string key = iden.token.value;
             if (variables.ContainsKey(key))
             {
-                //Console.WriteLine(variables[key].type);
                 if (variables[key].type.Equals("array"))
                 {
                     int i = Convert.ToInt32(iden.childs[0].token.value);
-                    //Console.WriteLine(variables[key].value.GetType());
                     object[] array = ((Array)variables[key].value).Cast<object>().ToArray();
                     int[] ints = Array.ConvertAll(array, item => Convert.ToInt32(item));
                     ints[i] = Convert.ToInt32(value);
                     variables[key].value = ints;
-                    // switch(variables[key].value.GetType()) {
-
-                    // }
-
                 }
                 else
                 {
@@ -121,12 +115,6 @@ namespace MiniPl
             foreach (KeyValuePair<string, Element> k in variables)
             {
                 Console.WriteLine("Key: {0}, Value: {1}, Type: {2}", k.Key, k.Value.value, k.Value.type);
-                // if (k.Value.value.GetType().IsArray)
-                // {
-                //     object[] array = ((Array)k.Value.value).Cast<object>().ToArray();
-                //     int[] ints = Array.ConvertAll(array, item => Convert.ToInt32(item));
-                //     Console.WriteLine(ints[0]);
-                // }
             }
         }
 
@@ -254,7 +242,6 @@ namespace MiniPl
             Node name = node.childs[0];
             List<Node> parameters = name.childs.GetRange(0, name.childs.Count - 2);
             Node type = name.childs[name.childs.Count - 2];
-            //functions.Add(name.token.value, new CustomFunction(parameters, type.token.value, node));
             Node begin = name.childs[name.childs.Count - 1];
             string t = "";
             switch (type.token.value)
@@ -275,27 +262,36 @@ namespace MiniPl
             text += t + name.token.value + "(";
             foreach (Node n in parameters)
             {
-                switch (n.childs[0].token.value)
+                if (n.token.value.Equals("var"))
                 {
-                    case "integer":
-                        text += "int " + n.token.value + ", ";
-                        break;
-                    case "real":
-                        text += "float " + n.token.value + ", ";
-                        break;
-                    case "string":
-                        text += "char " + n.token.value + "[], ";
-                        break;
-                    case "boolean":
-                        text += "bool " + n.token.value + ", ";
-                        break;
-                    case "array":
-                        text += "int " + n.token.value + "[], ";
-                        break;
-
-                        //array
+                    Node val = n.childs[0];
+                    text += "int *" + val.token.value + ", ";
+                    newScope.add(val, val.childs[0]);
                 }
-                newScope.add(n, n.childs[0]);
+                else
+                {
+                    switch (n.childs[0].token.value)
+                    {
+                        case "integer":
+                            text += "int " + n.token.value + ", ";
+                            break;
+                        case "real":
+                            text += "float " + n.token.value + ", ";
+                            break;
+                        case "string":
+                            text += "char " + n.token.value + "[], ";
+                            break;
+                        case "boolean":
+                            text += "bool " + n.token.value + ", ";
+                            break;
+                        case "array":
+                            text += "int " + n.token.value + "[], ";
+                            break;
+
+                            //array
+                    }
+                    newScope.add(n, n.childs[0]);
+                }
             }
             text = text.Substring(0, text.Length - 2);
             text += ") {\n";
@@ -308,30 +304,40 @@ namespace MiniPl
             Scope newScope = new Scope(new Dictionary<string, Element>(), scope);
             Node name = node.childs[0];
             List<Node> parameters = name.childs.GetRange(0, name.childs.Count - 1);
-            //functions.Add(name.token.value, new CustomFunction(parameters, "null", node));
             Node begin = name.childs[name.childs.Count - 1];
             text += "void " + name.token.value + "(";
             foreach (Node n in parameters)
             {
-                switch (n.childs[0].token.value)
+                if (n.token.value.Equals("var"))
                 {
-                    case "integer":
-                        text += "int " + n.token.value + ", ";
-                        break;
-                    case "real":
-                        text += "float " + n.token.value + ", ";
-                        break;
-                    case "string":
-                        text += "char " + n.token.value + "[], ";
-                        break;
-                    case "boolean":
-                        text += "bool " + n.token.value + ", ";
-                        break;
-                    case "array":
-                        text += "int " + n.token.value + "[], ";
-                        break;
+                    Node val = n.childs[0];
+                    text += "int *" + val.token.value + ", ";
+                    newScope.add(val, val.childs[0]);
                 }
-                newScope.add(n, n.childs[0]);
+                else
+                {
+                    switch (n.childs[0].token.value)
+                    {
+                        case "integer":
+                            text += "int " + n.token.value + ", ";
+                            break;
+                        case "real":
+                            text += "float " + n.token.value + ", ";
+                            break;
+                        case "string":
+                            text += "char " + n.token.value + "[], ";
+                            break;
+                        case "boolean":
+                            text += "bool " + n.token.value + ", ";
+                            break;
+                        case "array":
+                            text += "int " + n.token.value + "[], ";
+                            break;
+
+                            //array
+                    }
+                    newScope.add(n, n.childs[0]);
+                }
             }
             text = text.Substring(0, text.Length - 2);
             text += ") {\n";
@@ -412,7 +418,6 @@ namespace MiniPl
             block(do_, scope);
             text += "if (";
             printOperation(stat, scope);
-            //text += stat.childs[0].token.value + s + stat.childs[1].token.value;
             text += ") goto " + "L" + i + ";\n";
         }
 
@@ -421,10 +426,8 @@ namespace MiniPl
             Node stat = node.childs[0];
             Node then = node.childs[1];
 
-
             text += "if (";
             printOperation(stat, scope);
-            //text += stat.childs[0].token.value + stat.token.value + stat.childs[1].token.value;
             text += ") goto " + nextL() + ";\n";
 
             if (node.childs.Count() > 2)
@@ -465,7 +468,6 @@ namespace MiniPl
         private void defineVariable(Node node, Scope scope)
         {
             Node type = node.childs[node.childs.Count - 1];
-            //Console.WriteLine(type.token.value);
             for (int i = 0; i < node.childs.Count - 1; i++)
             {
                 Node iden = node.childs[i];
@@ -507,10 +509,8 @@ namespace MiniPl
 
         private void editVariable(Node node, Scope scope)
         {
-            //Element element = scope.variables[node.token.value];
             Node value = node.childs[0].childs[0];
             scope.edit(node, expression(value, scope));
-            //text += node.token.value + " = " + getCurrentR() + ";\n";
             Element e = scope.get(node.token.value);
             switch (e.type)
             {
@@ -536,7 +536,6 @@ namespace MiniPl
 
         private Object expression(Node node, Scope scope)
         {
-            //Console.WriteLine("TYPE " +node.token.type);
             switch (node.token.type)
             {
                 case TokenType.INT:
@@ -589,35 +588,63 @@ namespace MiniPl
                         }
                         else
                         {
-                            Node first = node.childs[0];
-                            switch (first.token.type)
+
+                            string t = operatorType(node, scope);
+                            switch (t)
                             {
-                                case TokenType.INT:
+                                case "integer":
                                     return integerOperation(node, scope);
-                                case TokenType.REAL:
+                                case "real":
                                     return realOperation(node, scope);
-                                case TokenType.STRING:
+                                case "string":
                                     return stringOperation(node, scope);
-                                case TokenType.IDENTIFIER:
-                                    Element e = scope.get(first.token.value);
-                                    if (e.type.Equals("integer"))
-                                    {
-                                        return integerOperation(node, scope);
-                                    }
-                                    else if (e.type.Equals("real"))
-                                    {
-                                        return realOperation(node, scope);
-                                    }
-                                    else if (e.type.Equals("string"))
-                                    {
-                                        return stringOperation(node, scope);
-                                    }
-                                    return null;
+                                case "array":
+                                    return integerOperation(node, scope);
                             }
                         }
                     }
                     return null;
             }
+        }
+
+        private string operatorType(Node node, Scope scope)
+        {
+            if (node.childs.Count > 0)
+            {
+                Node n = node.childs[0];
+                if (operators.Contains(n.token.type))
+                {
+                    return operatorType(n, scope);
+                }
+                else
+                {
+                    switch (n.token.type)
+                    {
+                        case TokenType.INT:
+                            return "integer";
+                        case TokenType.REAL:
+                            return "real";
+                        case TokenType.STRING:
+                            return "string";
+                        case TokenType.IDENTIFIER:
+                            Element e = scope.get(n.token.value);
+                            if (e.type.Equals("integer"))
+                            {
+                                return "integer";
+                            }
+                            else if (e.type.Equals("real"))
+                            {
+                                return "real";
+                            }
+                            else if (e.type.Equals("string"))
+                            {
+                                return "string";
+                            }
+                            return "null";
+                    }
+                }
+            }
+            return "null";
         }
 
 
@@ -641,9 +668,6 @@ namespace MiniPl
                     {
                         string i = node.childs[0].token.value;
                         text += "int " + nextR() + " = " + node.token.value + "[" + i + "];\n";
-                        // object[] array = ((Array)scope.get(node.token.value).value).Cast<object>().ToArray();
-                        // int[] ints = Array.ConvertAll(array, item => Convert.ToInt32(item));
-                        // return ints[i];
                         return 0;
                     }
                     else
@@ -782,8 +806,9 @@ namespace MiniPl
                 Node rightNode = node.childs[1];
                 string left = stringOperation(leftNode, scope);
                 string right = stringOperation(rightNode, scope);
-                text += "strcat(" + getCurrentR() + ", " + lastR() + ");\n";
-                //text += "char " + nextR() + "[99] = " + secondLastR() + " + " + lastR() + ";\n";
+                text += "strcat(" + lastR() + ", " + getCurrentR() + ");\n";
+                text += "char " + nextR() + "[99];\n";
+                text += "strcpy(" + getCurrentR() + ", " + secondLastR() + ");\n";
                 return left + right;
             }
             else
@@ -980,7 +1005,9 @@ namespace MiniPl
                                 string i = node.childs[0].token.value;
                                 text += node.token.value + "[" + i + "]";
                             }
-                        } else {
+                        }
+                        else
+                        {
                             text += node.token.value;
                         }
 
@@ -1003,7 +1030,6 @@ namespace MiniPl
         {
             foreach (Node printable in node.childs)
             {
-                //text += "printf(\"%s\", " + printable.token.value + ");\n";
                 if (printable.token.type == TokenType.IDENTIFIER)
                 {
                     try
@@ -1102,6 +1128,23 @@ namespace MiniPl
 
         private void assert(Node node, Scope scope)
         {
+            Node stat = node.childs[0];
+            text += "if (";
+            printOperation(stat, scope);
+            text += ") goto " + nextL() + ";\n";
+
+            text += "else {\n";
+            text += "printf(\"Assertion ";
+            printOperation(stat, scope);
+            text += " failed!\");\n";
+            text += "}\n";
+
+            text += "goto " + getFollowingL() + ";\n";
+            text += getCurrentL() + ": ;\n";
+            text += "printf(\"Assertion ";
+            printOperation(stat, scope);
+            text += " success!\");\n";
+            text += nextL() + ": ;\n";
             // Node oper = node.childs[0];
             // if (!booleanOperation(oper, scope))
             // {
