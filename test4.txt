@@ -1,0 +1,16 @@
+program p;
+procedure even(a: integer);
+begin
+if a=0 then writeln("even");
+else odd(a-1);
+end;
+procedure odd(a: integer);
+begin
+if a=0 then writeln("odd");
+else even(a-1);
+end;
+begin
+var a: integer;
+read(a);
+even(a);
+end.

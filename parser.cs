@@ -7,9 +7,7 @@ namespace MiniPl
     {
         static private List<Token> tokens;
         static private int current = 0;
-
-        static private bool errors = false;
-
+        
         static private Ast ast;
 
         static private Node root;
@@ -33,7 +31,6 @@ namespace MiniPl
             }
             Error e = new Error("SYNTAX ERROR: excepted token type " + types[0] + " but was " + tokens[current].type, tokens[current].line);
             Console.WriteLine(e);
-            errors = true;
         }
 
         private Node matchAddNode(Node parent, params TokenType[] types)
@@ -49,7 +46,6 @@ namespace MiniPl
             }
             Error e = new Error("SYNTAX ERROR: excepted token type " + types[0] + " but was " + tokens[current].type, tokens[current].line);
             Console.WriteLine(e);
-            errors = true;
             return null;
         }
 
@@ -65,7 +61,6 @@ namespace MiniPl
             }
             Error e = new Error("SYNTAX ERROR: excepted token type " + types[0] + " but was " + tokens[current].type, tokens[current].line);
             Console.WriteLine(e);
-            errors = true;
             return null;
         }
 
@@ -88,7 +83,6 @@ namespace MiniPl
         public Ast parse()
         {
             current = 0;
-            errors = false;
             ast = new Ast();
             root = new Node(new Token(TokenType.EOF, "root", 0));
             ast.root = root;

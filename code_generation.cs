@@ -110,14 +110,6 @@ namespace MiniPl
         }
 
 
-        public void printVariables()
-        {
-            foreach (KeyValuePair<string, Element> k in variables)
-            {
-                Console.WriteLine("Key: {0}, Value: {1}, Type: {2}", k.Key, k.Value.value, k.Value.type);
-            }
-        }
-
     }
 
 
@@ -136,7 +128,7 @@ namespace MiniPl
     }
 
 
-    class Semantic
+    class Code_generation
     {
 
         static private Ast ast;
@@ -149,7 +141,7 @@ namespace MiniPl
         int currentR = 0;
         int currentL = 0;
 
-        public Semantic(Ast ast_)
+        public Code_generation(Ast ast_)
         {
             ast = ast_;
         }
@@ -203,10 +195,7 @@ namespace MiniPl
             {
                 startBlock(node, global);
             }
-            // global.printVariables();
 
-            //gcc -o program program.c
-            //./program
             text += "\n}";
             File.WriteAllText("program.c", text);
         }
@@ -928,7 +917,6 @@ namespace MiniPl
         {
             Node left = null;
             Node right = null;
-            Console.WriteLine(node.token.value);
             if (node.token.type == TokenType.BOOLEAN)
             {
                 text += "bool " + nextR() + " = " + node.token.value + ";\n";
@@ -951,7 +939,6 @@ namespace MiniPl
             {
                 left = node.childs[0];
                 right = node.childs[1];
-                Console.WriteLine(left.token.value);
                 bool b = (expression(left, scope) == expression(right, scope));
                 text += "bool " + nextR() + " = " + secondLastR() + " == " + lastR() + ";\n";
                 return b;

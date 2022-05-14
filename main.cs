@@ -10,47 +10,39 @@ namespace MiniPl
     {
         static void Main(string[] args)
         {
-            // while (true)
-            // {
-            Console.WriteLine("enter filename, or empty to exit");
+
+            Console.WriteLine("Enter filename");
 
             string text = Console.ReadLine();
-
-            // if (text == "")
-            // {
-            //     break;
-            // }
 
             if (System.IO.File.Exists(text))
             {
 
                 string file = System.IO.File.ReadAllText(text);
 
-                //Console.WriteLine(file);
 
                 Scanner scanner = new Scanner();
                 List<Token> tokens = scanner.scan(file);
-                Console.WriteLine(tokens.Count + " tokens");
+                // Console.WriteLine(tokens.Count + " tokens");
 
-                foreach (var token in tokens)
-                {
-                    Console.WriteLine(token);
-                }
-                Console.WriteLine("");
+                // foreach (var token in tokens)
+                // {
+                //     Console.WriteLine(token);
+                // }
+                // Console.WriteLine("");
 
                 Parser parser = new Parser(tokens);
                 Ast ast = parser.parse();
-                ast.printChilds(ast.root);
-                Semantic semantic = new Semantic(ast);
-                //Console.WriteLine("Program start");
-                semantic.start();
+                // ast.printChilds(ast.root);
+                Code_generation gen = new Code_generation(ast);
+                gen.start();
+                Console.WriteLine("Run the command ./program to run the program");
             }
             else
             {
                 Console.WriteLine("File not found");
             }
             Console.WriteLine();
-            //}
 
         }
     }
