@@ -265,7 +265,21 @@ namespace MiniPl
                 if (n.token.value.Equals("var"))
                 {
                     Node val = n.childs[0];
-                    text += "int *" + val.token.value + ", ";
+                    switch (val.childs[0].token.value)
+                    {
+                        case "integer":
+                            text += "int *" + val.token.value + ", ";
+                            break;
+                        case "real":
+                            text += "float *" + val.token.value + ", ";
+                            break;
+                        case "string":
+                            text += "char *" + val.token.value + "[], ";
+                            break;
+                        case "boolean":
+                            text += "bool *" + val.token.value + ", ";
+                            break;
+                    }
                     newScope.add(val, val.childs[0]);
                 }
                 else
@@ -285,10 +299,24 @@ namespace MiniPl
                             text += "bool " + n.token.value + ", ";
                             break;
                         case "array":
-                            text += "int " + n.token.value + "[], ";
+                            string arrtype = n.childs[0].childs[0].token.value;
+                            if (arrtype.Equals("integer"))
+                            {
+                                text += "int " + n.token.value + "[], ";
+                            }
+                            else if (arrtype.Equals("real"))
+                            {
+                                text += "float " + n.token.value + "[], ";
+                            }
+                            else if (arrtype.Equals("string"))
+                            {
+                                text += "char *" + n.token.value + "[], ";
+                            }
+                            else if (arrtype.Equals("boolean"))
+                            {
+                                text += "bool " + n.token.value + "[], ";
+                            }
                             break;
-
-                            //array
                     }
                     newScope.add(n, n.childs[0]);
                 }
@@ -311,7 +339,22 @@ namespace MiniPl
                 if (n.token.value.Equals("var"))
                 {
                     Node val = n.childs[0];
-                    text += "int *" + val.token.value + ", ";
+                    switch (val.childs[0].token.value)
+                    {
+                        case "integer":
+                            text += "int *" + val.token.value + ", ";
+                            break;
+                        case "real":
+                            text += "float *" + val.token.value + ", ";
+                            break;
+                        case "string":
+                            text += "char *" + val.token.value + "[], ";
+                            break;
+                        case "boolean":
+                            text += "bool *" + val.token.value + ", ";
+                            break;
+
+                    }
                     newScope.add(val, val.childs[0]);
                 }
                 else
@@ -331,10 +374,24 @@ namespace MiniPl
                             text += "bool " + n.token.value + ", ";
                             break;
                         case "array":
-                            text += "int " + n.token.value + "[], ";
+                            string arrtype = n.childs[0].childs[0].token.value;
+                            if (arrtype.Equals("integer"))
+                            {
+                                text += "int " + n.token.value + "[], ";
+                            }
+                            else if (arrtype.Equals("real"))
+                            {
+                                text += "float " + n.token.value + "[], ";
+                            }
+                            else if (arrtype.Equals("string"))
+                            {
+                                text += "char *" + n.token.value + "[], ";
+                            }
+                            else if (arrtype.Equals("boolean"))
+                            {
+                                text += "bool " + n.token.value + "[], ";
+                            }
                             break;
-
-                            //array
                     }
                     newScope.add(n, n.childs[0]);
                 }
@@ -498,8 +555,10 @@ namespace MiniPl
                                 text += "float " + iden.token.value + "[" + arrVal + "];\n";
                                 break;
                             case "string":
+                                text += "char *" + iden.token.value + "[" + arrVal + "];\n";
                                 break;
                             case "boolean":
+                                text += "bool " + iden.token.value + "[" + arrVal + "];\n";
                                 break;
                         }
                         break;
@@ -528,7 +587,7 @@ namespace MiniPl
 
             Node value = node.childs[1].childs[0];
             scope.edit(node, expression(value, scope));
-            int i = Convert.ToInt32(node.childs[0].token.value);
+            string i = node.childs[0].token.value;
             text += node.token.value + "[" + i + "] = " + getCurrentR() + ";\n";
 
         }
@@ -547,7 +606,6 @@ namespace MiniPl
                 case TokenType.BOOLEAN:
                     return booleanOperation(node, scope);
                 case TokenType.IDENTIFIER:
-                    //edit
                     Element e2 = scope.get(node.token.value);
                     if (node.childs.Count > 0)
                     {
@@ -569,8 +627,27 @@ namespace MiniPl
                         case "boolean":
                             return booleanOperation(node, scope);
                         case "array":
-                            //edit for others
-                            return integerOperation(node, scope);
+                            int[] test1 = new int[1];
+                            float[] test2 = new float[1];
+                            string[] test3 = new string[1];
+                            bool[] test4 = new bool[1];
+                            if (e2.value.GetType().Equals(test1.GetType()))
+                            {
+                                return integerOperation(node, scope);
+                            }
+                            else if (e2.value.GetType().Equals(test2.GetType()))
+                            {
+                                return realOperation(node, scope);
+                            }
+                            else if (e2.value.GetType().Equals(test3.GetType()))
+                            {
+                                return stringOperation(node, scope);
+                            }
+                            else if (e2.value.GetType().Equals(test4.GetType()))
+                            {
+                                return booleanOperation(node, scope);
+                            }
+                            return null;
                         case "null":
                             text += "int " + nextR() + " = ";
                             call(node, scope);
@@ -639,6 +716,25 @@ namespace MiniPl
                             else if (e.type.Equals("string"))
                             {
                                 return "string";
+                            }
+                            else if (e.type.Equals("array"))
+                            {
+                                int[] test1 = new int[1];
+                                float[] test2 = new float[1];
+                                string[] test3 = new string[1];
+                                if (e.value.GetType().Equals(test1.GetType()))
+                                {
+                                    return "integer";
+                                }
+                                else if (e.value.GetType().Equals(test2.GetType()))
+                                {
+                                    return "real";
+                                }
+                                else if (e.value.GetType().Equals(test3.GetType()))
+                                {
+                                    return "string";
+                                }
+                                return "null";
                             }
                             return "null";
                     }
@@ -734,8 +830,17 @@ namespace MiniPl
             {
                 try
                 {
-                    text += "float " + nextR() + " = " + node.token.value + ";\n";
-                    return float.Parse(Convert.ToString(scope.get(node.token.value).value));
+                    if (node.childs.Count > 0)
+                    {
+                        string i = node.childs[0].token.value;
+                        text += "float " + nextR() + " = " + node.token.value + "[" + i + "];\n";
+                        return 0;
+                    }
+                    else
+                    {
+                        text += "float " + nextR() + " = " + node.token.value + ";\n";
+                        return float.Parse(Convert.ToString(scope.get(node.token.value).value));
+                    }
                 }
                 catch (Exception)
                 {
@@ -1055,7 +1160,6 @@ namespace MiniPl
                                 text += "printf(\"%d\", " + printable.token.value + "[" + i + "]);\n";
                                 break;
                             case "null":
-                                Console.WriteLine(printable.token.value);
                                 text += "printf(\"%d\", ";
                                 call(printable, scope);
                                 text += ");\n";

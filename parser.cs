@@ -335,9 +335,9 @@ namespace MiniPl
         private void assert_statement(Node parent)
         {
             Node p = matchAddNode(parent, TokenType.ASSERT);
-            match(TokenType.LEFT_BRACKET);
+            match(TokenType.LEFT_PAREN);
             boolean_expression(p);
-            match(TokenType.RIGHT_BRACKET);
+            match(TokenType.RIGHT_PAREN);
         }
 
 
