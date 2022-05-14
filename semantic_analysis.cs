@@ -1156,8 +1156,27 @@ namespace MiniPl
                                 text += "printf(\"%d\", " + printable.token.value + ");\n";
                                 break;
                             case "array":
+                                int[] test1 = new int[1];
+                                float[] test2 = new float[1];
+                                string[] test3 = new string[1];
+                                bool[] test4 = new bool[1];
                                 string i = printable.childs[0].token.value;
-                                text += "printf(\"%d\", " + printable.token.value + "[" + i + "]);\n";
+                                if (e.value.GetType().Equals(test1.GetType()))
+                                {
+                                    text += "printf(\"%d\", " + printable.token.value + "[" + i + "]);\n";
+                                }
+                                else if (e.value.GetType().Equals(test2.GetType()))
+                                {
+                                    text += "printf(\"%f\", " + printable.token.value + "[" + i + "]);\n";
+                                }
+                                else if (e.value.GetType().Equals(test3.GetType()))
+                                {
+                                    text += "printf(\"%s\", " + printable.token.value + "[" + i + "]);\n";
+                                }
+                                else if (e.value.GetType().Equals(test4.GetType()))
+                                {
+                                    text += "printf(\"%d\", " + printable.token.value + "[" + i + "]);\n";
+                                }
                                 break;
                             case "null":
                                 text += "printf(\"%d\", ";
@@ -1185,6 +1204,9 @@ namespace MiniPl
                         case TokenType.STRING:
                             text += "printf(\"" + printable.token.value + "\");\n";
                             break;
+                        case TokenType.BOOLEAN:
+                            text += "printf(\"%d\", " + printable.token.value + ");\n";
+                            break;
                     }
                 }
             }
@@ -1200,19 +1222,45 @@ namespace MiniPl
                     try
                     {
                         Element e = scope.get(readable.token.value);
-
-                        if (e.type.Equals("string"))
+                        if (e.type.Equals("integer"))
+                        {
+                            text += "scanf(\"%d\", &" + readable.token.value + ");\n";
+                        }
+                        else if (e.type.Equals("real"))
+                        {
+                            text += "scanf(\"%f\", &" + readable.token.value + ");\n";
+                        }
+                        else if (e.type.Equals("string"))
                         {
                             text += "scanf(\"%s\", &" + readable.token.value + ");\n";
                         }
-                        else if (e.type.Equals("integer"))
+                        else if (e.type.Equals("boolean"))
                         {
                             text += "scanf(\"%d\", &" + readable.token.value + ");\n";
                         }
                         else if (e.type.Equals("array"))
                         {
                             string i = readable.childs[0].token.value;
-                            text += "scanf(\"%d\", &" + readable.token.value + "[" + i + "]);\n";
+                            int[] test1 = new int[1];
+                            float[] test2 = new float[1];
+                            string[] test3 = new string[1];
+                            bool[] test4 = new bool[1];
+                            if (e.value.GetType().Equals(test1.GetType()))
+                            {
+                                text += "scanf(\"%d\", &" + readable.token.value + "[" + i + "]);\n";
+                            }
+                            else if (e.value.GetType().Equals(test2.GetType()))
+                            {
+                                text += "scanf(\"%f\", &" + readable.token.value + "[" + i + "]);\n";
+                            }
+                            else if (e.value.GetType().Equals(test3.GetType()))
+                            {
+                                text += "scanf(\"%s\", &" + readable.token.value + "[" + i + "]);\n";
+                            }
+                            else if (e.value.GetType().Equals(test4.GetType()))
+                            {
+                                text += "scanf(\"%d\", &" + readable.token.value + "[" + i + "]);\n";
+                            }
                         }
                     }
                     catch
@@ -1249,11 +1297,6 @@ namespace MiniPl
             printOperation(stat, scope);
             text += " success!\");\n";
             text += nextL() + ": ;\n";
-            // Node oper = node.childs[0];
-            // if (!booleanOperation(oper, scope))
-            // {
-            //     Console.WriteLine("Assertion failed!");
-            // }
         }
 
 
