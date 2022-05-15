@@ -773,30 +773,32 @@ namespace MiniPl
                 Node left = node.childs[0];
                 Node right = node.childs[1];
                 int leftint = integerOperation(left, scope);
+                string first = getCurrentR();
                 int rightint = integerOperation(right, scope);
+                string second = getCurrentR();
                 if (operation == TokenType.PLUS)
                 {
-                    text += "int " + nextR() + " = " + secondLastR() + " + " + lastR() + ";\n";
+                    text += "int " + nextR() + " = " + first + " + " + second + ";\n";
                     return leftint + rightint;
                 }
                 else if (operation == TokenType.MINUS)
                 {
-                    text += "int " + nextR() + " = " + secondLastR() + " - " + lastR() + ";\n";
+                    text += "int " + nextR() + " = " + first + " - " + second + ";\n";
                     return leftint - rightint;
                 }
                 else if (operation == TokenType.STAR)
                 {
-                    text += "int " + nextR() + " = " + secondLastR() + " * " + lastR() + ";\n";
+                    text += "int " + nextR() + " = " + first + " * " + second + ";\n";
                     return leftint * rightint;
                 }
                 else if (operation == TokenType.SLASH)
                 {
-                    text += "int " + nextR() + " = " + secondLastR() + " / " + lastR() + ";\n";
+                    text += "int " + nextR() + " = " + first + " / " + second + ";\n";
                     return leftint / rightint;
                 }
                 else if (operation == TokenType.MODULO)
                 {
-                    text += "int " + nextR() + " = " + secondLastR() + " % " + lastR() + ";\n";
+                    text += "int " + nextR() + " = " + first + " % " + second + ";\n";
                     return leftint % rightint;
                 }
             }
@@ -843,25 +845,27 @@ namespace MiniPl
                 Node left = node.childs[0];
                 Node right = node.childs[1];
                 float leftint = realOperation(left, scope);
+                string first = getCurrentR();
                 float rightint = realOperation(right, scope);
+                string second = getCurrentR();
                 if (operation == TokenType.PLUS)
                 {
-                    text += "float " + nextR() + " = " + secondLastR() + " + " + lastR() + ";\n";
+                    text += "float " + nextR() + " = " + first + " + " + second + ";\n";
                     return leftint + rightint;
                 }
                 else if (operation == TokenType.MINUS)
                 {
-                    text += "float " + nextR() + " = " + secondLastR() + " - " + lastR() + ";\n";
+                    text += "float " + nextR() + " = " + first + " - " + second + ";\n";
                     return leftint - rightint;
                 }
                 else if (operation == TokenType.STAR)
                 {
-                    text += "float " + nextR() + " = " + secondLastR() + " * " + lastR() + ";\n";
+                    text += "float " + nextR() + " = " + first + " * " + second + ";\n";
                     return leftint * rightint;
                 }
                 else if (operation == TokenType.SLASH)
                 {
-                    text += "float " + nextR() + " = " + secondLastR() + " / " + lastR() + ";\n";
+                    text += "float " + nextR() + " = " + first + " / " + second + ";\n";
                     return leftint / rightint;
                 }
             }
