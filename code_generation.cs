@@ -479,9 +479,7 @@ namespace MiniPl
             if (node.childs.Count() > 2)
             {
                 Node els = node.childs[2];
-                text += "else {\n";
                 statement(els.childs[0], scope);
-                text += "}\n";
             }
             text += "goto " + getFollowingL() + ";\n";
             text += getCurrentL() + ": ;\n";
